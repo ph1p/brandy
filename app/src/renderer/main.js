@@ -6,7 +6,7 @@ import { ipcRenderer } from 'electron';
 
 import App from './App';
 import routes from './routes';
-// import store from 'renderer/vuex/store';
+import store from 'renderer/store';
 // import config from '../config';
 import feather from 'feather-icons';
 
@@ -32,6 +32,7 @@ const router = new Router({
 
 /* eslint-disable no-new */
 new Vue({
+  store,
   router,
   ...App
 }).$mount('#app');
