@@ -1,0 +1,94 @@
+@import "./variables.scss";
+@import "./forms.scss";
+@import "./icons.scss";
+@import "./buttons.scss";
+
+*,
+*:after,
+*:before {
+	box-sizing: border-box;
+}
+
+:not(input):not(textarea),
+:not(input):not(textarea)::after,
+:not(input):not(textarea)::before {
+	cursor: default;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+:focus,
+button,
+input,
+textarea {
+	outline: none;
+}
+
+a:not([draggable=true]),
+img:not([draggable=true]) {
+	-webkit-user-drag: none;
+	user-drag: none;
+}
+
+a[href^="ftp://"],
+a[href^="http://"],
+a[href^="https://"] {
+	-webkit-user-drag: auto;
+	user-drag: auto;
+}
+
+#app {
+	padding: 26px 0 0;
+
+	font-size: 1.4rem;
+}
+
+#app,
+body,
+html {
+	overflow: hidden;
+
+	height: 100%;
+
+	cursor: default;
+	-webkit-user-select: none;
+	user-select: none;
+
+	//font: caption;
+	font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif, "Apple Color Emoji";
+	font-size: 14px;
+	color: $mainColor;
+}
+
+::-webkit-scrollbar {
+	width: 4px;
+}
+
+::-webkit-scrollbar-track {
+	border-radius: 0;
+	background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	border-radius: 7px;
+	background-color: #bcc0c9;
+}
+
+:focus,
+button,
+input,
+textarea {
+	outline: none !important;
+	box-shadow: none;
+	box-shadow: none;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+}
+// overwrite
+
+.form-input {
+	font-size: 1.4rem;
+}

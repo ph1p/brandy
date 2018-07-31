@@ -1,0 +1,47 @@
+.btn {
+	display: inline-block;
+
+	padding: 7px 14px;
+
+	color: #999;
+	border: 0;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	background: transparent;
+
+	font-size: 1.2rem;
+
+	cursor: pointer;
+
+	&:active,
+	&:focus {
+		border-width: 1px 1px 1px 1px;
+	}
+
+	&-primary {
+		color: #fff;
+		border: 0;
+		background-color: $primary-color;
+
+		&:hover {
+			background-color: lighten($primary-color, 5%);
+		}
+	}
+
+	&-grey {
+		color: #949aa8;
+		background-color: #474d5c;
+		border: 0;
+
+		&:hover {
+			background-color: lighten(#474d5c, 5%);
+		}
+	}
+	&-inline {
+		display: inline-block;
+	}
+	&-full-width {
+		width: 100%;
+		text-align: center;
+	}
+}
