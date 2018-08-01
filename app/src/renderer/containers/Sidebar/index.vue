@@ -85,10 +85,10 @@
 				<div class="sidebar__sectionsItem-content" v-if="areStrokeOptionsOpen">
 
 					<label for="strokeWidth">Width</label>
-					<input type="range" v-model="stroke.width" name="strokeWidth" min="0" max="20" step="1">
+					<input type="range" v-model="strokeWidth" name="strokeWidth" min="0" max="20" step="1">
 
 					<label for="strokeColor">Color</label>
-					<input type="color" name="strokeColor" v-model="stroke.color" />
+					<input type="color" name="strokeColor" v-model="strokeColor" />
 
 				</div>
 			</div>
@@ -129,6 +129,7 @@
 	</div>
 </template>
 <script>
+import { mapGetters, mapActions } from 'vuex';
 import { remote, ipcRenderer } from 'electron';
 import Filters from '../../components/Filters';
 
@@ -156,10 +157,6 @@ export default {
       textAlign: 'center',
       activePreset: 0,
       selectedFilterPreset: null,
-      stroke: {
-        color: '#ffffff',
-        width: 0
-      },
       filter: {
         blur: 0,
         filters: []
@@ -178,15 +175,6 @@ export default {
     backgroundImage(path) {
       this.$parent.$emit('changeBackground', path);
     },
-    stroke: {
-      deep: true,
-      handler(value) {
-        this.$parent.$emit('changeStroke', {
-          width: parseInt(value.width, 0),
-          color: value.color
-        });
-      }
-    },
     filter: {
       deep: true,
       handler(value) {
@@ -203,6 +191,27 @@ export default {
     }
   },
   computed: {
+    ...mapGetters('canvas', ['isLoading', 'stroke']),
+    strokeWidth: {
+      get() {
+        return this.stroke.width;
+      },
+      set(value) {
+        this.setStroke({
+          width: parseInt(value, 0)
+        });
+      }
+    },
+    strokeColor: {
+      get() {
+        return this.stroke.color;
+      },
+      set(value) {
+        this.setStroke({
+          color: value
+        });
+      }
+    },
     logoProperties() {
       return {
         brand: this.brand,
@@ -227,6 +236,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions('canvas', ['stopLoading', 'startLoading', 'setStroke']),
     exportImage() {
       const canvas = document.getElementById('canvas');
       const dataURL = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
@@ -282,9 +292,7 @@ export default {
     this.$parent.$on('loaded', () => {
       this.$parent.$emit('changeLogo', this.logoProperties);
       this.$parent.$emit('changeTexts', this.textProperties);
-      console.log('changePreset');
       this.$parent.$emit('changePreset', this.activePresetObj);
-      this.$parent.$emit('changeStroke', this.stroke);
       this.$parent.$emit('changeMeasurements', {
         width: this.activePresetObj.width,
         height: this.activePresetObj.height

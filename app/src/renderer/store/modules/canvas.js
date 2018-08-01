@@ -17,29 +17,26 @@ const state = {
     image: 'b1w',
     directionH: 'center',
     directionV: 'bottom',
-    color: '#fff'
+    color: '#ffffff'
   },
   texts: {
     title: '',
     subtitle: ''
   },
   measurements: {
-    width: 0,
-    height: 0
+    width: 1200,
+    height: 628,
   },
   font: {
     size: 0,
-    color: '#fff',
+    color: '#ffffff',
     align: 'center'
   },
   preset: {
     icon: "facebook",
     title: "Facebook ad",
-    width: 1200,
-    height: 628,
     logo: 160,
-    logo2: 95,
-    fontSize: 110
+    logo2: 95
   },
   backgroundPath: '',
   backgroundBuffer: null
@@ -50,14 +47,16 @@ const mutations = {
     state = Object.assign(state, settings);
   },
   ['START_LOADING'](state, settings) {
-    state = Object.assign(state, {
-      loading: true
-    });
+    state.loading = true;
   },
   ['STOP_LOADING'](state, settings) {
-    state = Object.assign(state, {
-      loading: false
-    });
+    state.loading = false;
+  },
+  ['SET_MEASUREMENTS'](state, options) {
+    state.measurements = Object.assign(state.measurements, options);
+  },
+  ['SET_STROKE'](state, options) {
+    state.stroke = Object.assign(state.stroke, options);
   }
 };
 
@@ -71,12 +70,19 @@ const actions = {
   stopLoading({ commit, state, getters }) {
     commit('STOP_LOADING');
   },
+  setMeasurements({ commit, state, getters }, options) {
+    commit('SET_MEASUREMENTS', options);
+  },
+  setStroke({ commit, state, getters }, options) {
+    commit('SET_STROKE', options);
+  }
 }
 
 const getters = {
   settings: state => state,
   setting: state => part => state[part],
-  isLoading: state => state.loading
+  isLoading: state => state.loading,
+  stroke: state => state.stroke
 }
 
 export default {

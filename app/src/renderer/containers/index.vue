@@ -51,7 +51,6 @@ export default {
   name: 'main-page',
   data() {
     return {
-      stroke: {},
       settings: {},
       canvas: null,
       filter: {},
@@ -67,11 +66,12 @@ export default {
     Loader
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading'])
+    ...mapGetters('canvas', ['isLoading', 'stroke'])
   },
   methods: {
     ...mapActions('canvas', ['stopLoading', 'startLoading']),
     setImageStroke() {
+      console.log('setImageStroke');
       const leftStrokeCanvas = this.canvas.getItemByName('leftStroke');
       const topStrokeCanvas = this.canvas.getItemByName('topStroke');
       const rightStrokeCanvas = this.canvas.getItemByName('rightStroke');
@@ -399,13 +399,17 @@ export default {
     this.$off('changeMeasurements');
     this.$off('changePreset');
     this.$off('changeBackground');
-    this.$off('changeStroke');
   },
   watch: {
     texts: 'setTexts',
     logo: 'setLogo',
     filter: 'setFilters',
-    stroke: 'setImageStroke',
+    stroke: {
+      deep: true,
+      handler() {
+        this.setImageStroke();
+      }
+    },
     measurements: 'setMeasurements'
   },
   created() {
@@ -521,10 +525,6 @@ export default {
       this.preset = preset;
     });
 
-    this.$on('changeStroke', stroke => {
-      this.stroke = stroke;
-    });
-
     // SCALE
     window.addEventListener('resize', this.scaleStage);
 
@@ -551,11 +551,11 @@ export default {
       this.canvas.clear();
 
       ipcRenderer.send('compress-image', {
-				image: this.background,
+        image: this.background,
         isBackground: true
       });
 
-			this.startLoading();
+      this.startLoading();
 
       WebFont.load({
         google: {
