@@ -1,75 +1,123 @@
 export const presets = [
   {
-    icon: 'instagram',
-    title: 'Instagram',
-    width: 1080,
-    height: 1080,
-    logo: 180,
-    logo2: 95,
-    fontSize: 120
+    info: {
+      icon: 'instagram',
+      title: 'Instagram',
+      logo: 180,
+      logo2: 95
+    },
+    measurements: {
+      width: 1080,
+      height: 1080,
+    },
+    font: {
+      size: 120
+    }
   },
   {
-    icon: 'instagram',
-    title: 'Instagram big',
-    width: 1080,
-    height: 1350,
-    logo: 180,
-    logo2: 95,
-    fontSize: 120
+    info: {
+      icon: 'instagram',
+      title: 'Instagram big',
+      logo: 180,
+      logo2: 95,
+    },
+    measurements: {
+      width: 1080,
+      height: 1350
+    },
+    font: {
+      fontSize: 120
+    }
   },
   {
-    icon: 'twitter',
-    title: 'Twitter header',
-    width: 1500,
-    height: 500,
-    logo: 220,
-    logo2: 95,
-    fontSize: 80
+    info: {
+      icon: 'twitter',
+      title: 'Twitter header',
+      logo: 220,
+      logo2: 95,
+    },
+    measurements: {
+      width: 1500,
+      height: 500
+    },
+    font: {
+      fontSize: 80
+    }
   },
   {
-    icon: 'twitter',
-    title: 'Twitter desktop grid',
-    width: 1200,
-    height: 1200,
-    logo: 160,
-    logo2: 95,
-    fontSize: 130
+    info: {
+      icon: 'twitter',
+      title: 'Twitter desktop grid',
+      logo: 160,
+      logo2: 95,
+    },
+    measurements: {
+      width: 1200,
+      height: 1200
+    },
+    font: {
+      fontSize: 130
+    }
   },
   {
-    icon: 'twitter',
-    title: 'Twitter mobile grid',
-    width: 1200,
-    height: 675,
-    logo: 160,
-    logo2: 95,
-    fontSize: 110
+    info: {
+      icon: 'twitter',
+      title: 'Twitter mobile grid',
+      logo: 160,
+      logo2: 95,
+    },
+    measurements: {
+      width: 1200,
+      height: 675
+    },
+    font: {
+      fontSize: 110
+    }
   },
   {
-    icon: 'twitter',
-    title: 'Twitter appcard mit Bild',
-    width: 800,
-    height: 320,
-    logo: 120,
-    logo2: 95,
-    fontSize: 60
+    info: {
+      icon: 'twitter',
+      title: 'Twitter appcard mit Bild',
+      logo: 120,
+      logo2: 95,
+    },
+    measurements: {
+      width: 800,
+      height: 320
+    },
+    font: {
+      fontSize: 60
+    }
   },
   {
-    icon: 'facebook',
-    title: 'Facebook ad',
-    width: 1200,
-    height: 628,
-    logo: 160,
-    logo2: 95,
-    fontSize: 110
+    info: {
+      icon: 'facebook',
+      title: 'Facebook ad',
+      logo: 160,
+      logo2: 95,
+    },
+    measurements: {
+      width: 1200,
+      height: 628
+    },
+    font: {
+      fontSize: 110
+    }
   },
   {
-    icon: 'facebook',
-    title: 'Facebook carousel',
-    width: 1080,
-    height: 1080,
-    logo: 180,
-    logo2: 95,
-    fontSize: 120
+    info: {
+      icon: 'facebook',
+      title: 'Facebook carousel',
+      logo: 180,
+      logo2: 95,
+    },
+    measurements: {
+      width: 1080,
+      height: 1080
+    },
+    font: {
+      fontSize: 120
+    }
   }
 ];
 

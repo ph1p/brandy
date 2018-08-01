@@ -9,7 +9,7 @@
 
 			<div class="stage" ref="stageElement" v-show="background">
 				<div class="stage-info" v-if="preset !== null && !isLoading">
-					<span class="stage-info-title">{{preset.title}}</span>
+					<span class="stage-info-title">{{preset.info.title}}</span>
 					<span class="stage-info-measurements">{{measurements.width}}px x {{measurements.height}}px</span>
 				</div>
 				<canvas v-show="!isLoading" id="canvas" ref="canvasElement"></canvas>
@@ -24,6 +24,8 @@ import { ipcRenderer } from 'electron';
 import { fabric } from 'fabric';
 import Sidebar from './Sidebar';
 import Loader from '../components/Loader';
+
+let canvas = null;
 
 fabric.isWebglSupported(fabric.textureSize);
 
@@ -52,12 +54,9 @@ export default {
   data() {
     return {
       settings: {},
-      canvas: null,
       filter: {},
       texts: {},
       logo: {},
-      measurements: {},
-      preset: {},
       background: ''
     };
   },
@@ -66,22 +65,21 @@ export default {
     Loader
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text'])
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'measurements', 'preset'])
   },
   methods: {
     ...mapActions('canvas', ['stopLoading', 'startLoading']),
     setImageStroke() {
-      console.log('setImageStroke');
-      const leftStrokeCanvas = this.canvas.getItemByName('leftStroke');
-      const topStrokeCanvas = this.canvas.getItemByName('topStroke');
-      const rightStrokeCanvas = this.canvas.getItemByName('rightStroke');
-      const bottomStrokeCanvas = this.canvas.getItemByName('bottomStroke');
+      const leftStrokeCanvas = canvas.getItemByName('leftStroke');
+      const topStrokeCanvas = canvas.getItemByName('topStroke');
+      const rightStrokeCanvas = canvas.getItemByName('rightStroke');
+      const bottomStrokeCanvas = canvas.getItemByName('bottomStroke');
 
       const strokeWidth = this.stroke.width || 0;
       const strokeColor = this.stroke.color || '#ffffff';
 
-      const height = this.canvas.getHeight();
-      const width = this.canvas.getWidth();
+      const height = canvas.getHeight();
+      const width = canvas.getWidth();
 
       const lines = [
         {
@@ -136,10 +134,10 @@ export default {
         rightStroke.set('name', 'rightStroke');
         bottomStroke.set('name', 'bottomStroke');
 
-        this.canvas.add(leftStroke);
-        this.canvas.add(topStroke);
-        this.canvas.add(rightStroke);
-        this.canvas.add(bottomStroke);
+        canvas.add(leftStroke);
+        canvas.add(topStroke);
+        canvas.add(rightStroke);
+        canvas.add(bottomStroke);
       } else {
         leftStrokeCanvas.set(lines[0]);
         topStrokeCanvas.set(lines[1]);
@@ -147,23 +145,22 @@ export default {
         bottomStrokeCanvas.set(lines[3]);
       }
 
-      this.canvas.bringToFront(leftStrokeCanvas);
-      this.canvas.bringToFront(topStrokeCanvas);
-      this.canvas.bringToFront(rightStrokeCanvas);
-      this.canvas.bringToFront(bottomStrokeCanvas);
+      canvas.bringToFront(leftStrokeCanvas);
+      canvas.bringToFront(topStrokeCanvas);
+      canvas.bringToFront(rightStrokeCanvas);
+      canvas.bringToFront(bottomStrokeCanvas);
 
-      this.canvas.renderAll();
+      canvas.renderAll();
     },
     setMeasurements() {
-      console.log('setMeasurements');
-      const img = this.canvas.getItemByName('backgroundImage');
+      const img = canvas.getItemByName('backgroundImage');
 
       if (img) {
         const { width, height } = this.measurements;
         let scaleFactor = width / img.width;
 
-        this.canvas.setWidth(width);
-        this.canvas.setHeight(height);
+        canvas.setWidth(width);
+        canvas.setHeight(height);
 
         if (img.width > img.height && height >= width) {
           scaleFactor = height / img.height;
@@ -178,7 +175,7 @@ export default {
           originY: 'center'
         });
 
-        this.canvas.renderAll();
+        canvas.renderAll();
       }
     },
     setLogo() {
@@ -203,25 +200,25 @@ export default {
           logoSize = this.logo.logo2Size;
           break;
       }
-      const logoElement = this.canvas.getItemByName('logo');
+      const logoElement = canvas.getItemByName('logo');
 
       fabric.loadSVGFromURL(image, (logoImg, options) => {
         const svg = fabric.util.groupSVGElements(logoImg, options);
 
-        this.canvas.remove(this.canvas.getItemByName('logo'));
+        canvas.remove(canvas.getItemByName('logo'));
 
         svg.set('name', 'logo');
 
         svg.scaleToWidth(logoSize);
 
-        this.canvas.add(svg);
+        canvas.add(svg);
 
-        svg.top = this.canvas.getHeight() - svg.height * svg.scaleY - 40;
-        svg.left = this.canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
+        svg.top = canvas.getHeight() - svg.height * svg.scaleY - 40;
+        svg.left = canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
 
         switch (this.logo.brandDirectionHorizontal) {
           case 'right':
-            svg.left = this.canvas.getWidth() - svg.width * svg.scaleX - 50;
+            svg.left = canvas.getWidth() - svg.width * svg.scaleX - 50;
             break;
           case 'left':
             svg.left = 50;
@@ -233,18 +230,18 @@ export default {
             svg.top = 50;
             break;
           case 'center':
-            svg.top = this.canvas.getHeight() / 2 - svg.height * svg.scaleY / 2;
+            svg.top = canvas.getHeight() / 2 - svg.height * svg.scaleY / 2;
             break;
         }
 
         this.stopLoading();
 
-        this.canvas.renderAll();
+        canvas.renderAll();
       });
     },
     setFilters() {
       const f = fabric.Image.filters;
-      const img = this.canvas.getItemByName('backgroundImage');
+      const img = canvas.getItemByName('backgroundImage');
       img.filters = [];
       if (this.filter) {
         if (this.filter.blur) {
@@ -267,7 +264,7 @@ export default {
 
         img.applyFilters(img.filters);
 
-        this.canvas.renderAll();
+        canvas.renderAll();
       }
     },
     setTexts() {
@@ -276,12 +273,12 @@ export default {
       let subtitleFound = false;
       let titleFound = false;
 
-      const titleObj = this.canvas.getItemByName('title');
-      const subtitleObj = this.canvas.getItemByName('subtitle');
+      const titleObj = canvas.getItemByName('title');
+      const subtitleObj = canvas.getItemByName('subtitle');
 
       if (titleObj) {
         if (this.texts.title === '') {
-          this.canvas.remove(titleObj);
+          canvas.remove(titleObj);
         } else {
           title = titleObj;
           titleFound = true;
@@ -290,7 +287,7 @@ export default {
 
       if (subtitleObj) {
         if (this.texts.subtitle === '') {
-          this.canvas.remove(subtitleObj);
+          canvas.remove(subtitleObj);
         } else {
           subtitle = subtitleObj;
           subtitleFound = true;
@@ -311,7 +308,7 @@ export default {
           });
           title.set('name', 'title');
 
-          this.canvas.add(title);
+          canvas.add(title);
         }
 
         title.set({
@@ -349,7 +346,7 @@ export default {
             hoverCursor: 'normal'
           });
           subtitle.set('name', 'subtitle');
-          this.canvas.add(subtitle);
+          canvas.add(subtitle);
         }
 
         subtitle.set({
@@ -374,15 +371,15 @@ export default {
         });
       }
 
-      this.canvas.renderAll();
+      canvas.renderAll();
     },
     scaleStage() {
       const contentElement = this.$refs.contentElement;
 
       if (typeof contentElement !== 'undefined') {
         const scale = Math.min(
-          (contentElement.offsetWidth - 100) / this.canvas.getWidth(),
-          (contentElement.offsetHeight - 180) / this.canvas.getHeight()
+          (contentElement.offsetWidth - 100) / canvas.getWidth(),
+          (contentElement.offsetHeight - 180) / canvas.getHeight()
         );
 
         if (scale <= 1) {
@@ -396,8 +393,6 @@ export default {
     this.$off('changeFilter');
     this.$off('changeTexts');
     this.$off('changeLogo');
-    this.$off('changeMeasurements');
-    this.$off('changePreset');
     this.$off('changeBackground');
   },
   watch: {
@@ -416,7 +411,19 @@ export default {
         this.setTexts();
       }
     },
-    measurements: 'setMeasurements'
+    measurements: {
+      deep: true,
+      handler() {
+        this.setMeasurements();
+      }
+    },
+    preset: {
+      deep: true,
+      handler() {
+				this.scaleStage();
+				this.setLogo();
+      }
+    }
   },
   created() {
     ipcRenderer.on('compressed-background-image', (event, image) => {
@@ -426,23 +433,23 @@ export default {
       const objectURL = URL.createObjectURL(blob);
 
       fabric.Image.fromURL(objectURL, newImage => {
-        const backgroundImage = this.canvas.getItemByName('backgroundImage');
+        const backgroundImage = canvas.getItemByName('backgroundImage');
 
         if (backgroundImage) {
-          this.canvas.fxRemove(backgroundImage);
+          canvas.fxRemove(backgroundImage);
         }
 
         newImage.set('name', 'backgroundImage');
 
-        this.canvas.setWidth(this.canvas.width);
-        this.canvas.setHeight(this.canvas.width);
+        canvas.setWidth(canvas.width);
+        canvas.setHeight(canvas.width);
 
         newImage.set({
           hasControls: false
         });
 
-        this.canvas.add(newImage);
-        this.canvas.sendToBack(newImage);
+        canvas.add(newImage);
+        canvas.sendToBack(newImage);
 
         this.setMeasurements();
         this.scaleStage();
@@ -451,7 +458,7 @@ export default {
         this.setLogo();
         this.setImageStroke();
 
-        this.canvas.renderAll();
+        canvas.renderAll();
 
         this.stopLoading();
       });
@@ -462,12 +469,10 @@ export default {
       backgroundPath: 'fsdfdsf'
     });
 
-    console.log(this.$store.getters['canvas/isLoading']);
-
     fabric.filterBackend = new fabric.WebglFilterBackend();
 
-    if (!this.canvas) {
-      this.canvas = new fabric.Canvas(this.$refs.canvasElement, {
+    if (!canvas) {
+      canvas = new fabric.Canvas(this.$refs.canvasElement, {
         controlsAboveOverlay: true,
         preserveObjectStacking: true,
 
@@ -475,14 +480,14 @@ export default {
         enableRetinaScaling: true,
         renderOnAddRemove: true
       });
-      window.can = this.canvas;
+      window.can = canvas;
 
-      this.canvas.selection = false;
-      this.canvas.setHeight(canvas.width);
-      this.canvas.setWidth(canvas.height);
-      this.canvas.hasBorders = false;
+      canvas.selection = false;
+      canvas.setHeight(canvas.width);
+      canvas.setWidth(canvas.height);
+      canvas.hasBorders = false;
 
-      this.canvas.on('object:moving', function(e) {
+      canvas.on('object:moving', function(e) {
         var obj = e.target;
         // if object is too big ignore
         if (obj.currentHeight > obj.canvas.height || obj.currentWidth > obj.canvas.width) {
@@ -523,14 +528,6 @@ export default {
       this.logo = opt;
     });
 
-    this.$on('changeMeasurements', opt => {
-      this.measurements = opt;
-    });
-
-    this.$on('changePreset', preset => {
-      this.preset = preset;
-    });
-
     // SCALE
     window.addEventListener('resize', this.scaleStage);
 
@@ -554,7 +551,7 @@ export default {
 
       this.background = e.dataTransfer.files[0].path;
 
-      this.canvas.clear();
+      canvas.clear();
 
       ipcRenderer.send('compress-image', {
         image: this.background,

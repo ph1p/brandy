@@ -8,14 +8,14 @@
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="arePresetsOpen">
 					<ul class="preset-list">
-						<li :key="preset.title" v-for="(preset, index) in presets" :class="{active: activePreset === index}" @click="activePreset = index">
-							<div class="preset-list__icon" :class="[preset.icon]">
-								<img v-if="preset.icon === 'twitter'" src="~renderer/assets/img/icons/ic_twitter.svg">
-								<img v-if="preset.icon === 'facebook'" src="~renderer/assets/img/icons/ic_facebook.svg">
-								<img v-if="preset.icon === 'instagram'" src="~renderer/assets/img/icons/ic_instagram.svg">
+						<li :key="presetItem.info.title" v-for="presetItem in presets" :class="{active: presetItem.info.title === preset.info.title}" @click="setCurrentPreset(presetItem)">
+							<div class="preset-list__icon" :class="[presetItem.info.icon]">
+								<img v-if="presetItem.info.icon === 'twitter'" src="~renderer/assets/img/icons/ic_twitter.svg">
+								<img v-if="presetItem.info.icon === 'facebook'" src="~renderer/assets/img/icons/ic_facebook.svg">
+								<img v-if="presetItem.info.icon === 'instagram'" src="~renderer/assets/img/icons/ic_instagram.svg">
 							</div>
-							<div class="preset-list__title">{{preset.title}}</div>
-							<div class="preset-list__measurement">{{preset.width}}x{{preset.height}}</div>
+							<div class="preset-list__title">{{presetItem.info.title}}</div>
+							<div class="preset-list__measurement">{{presetItem.measurements.width}}x{{presetItem.measurements.height}}</div>
 						</li>
 					</ul>
 				</div>
@@ -142,13 +142,12 @@ export default {
   },
   data() {
     return {
-      backgroundImage: '',
-      settings: {},
       arePresetsOpen: true,
       areLogosOpen: false,
       areFiltersOpen: false,
       areFontsOpen: false,
       areStrokeOptionsOpen: false,
+      backgroundImage: '',
       brand: 'b1w',
       brandDirectionHorizontal: 'center',
       brandDirectionVertical: 'bottom',
@@ -179,18 +178,18 @@ export default {
       handler(value) {
         this.$parent.$emit('changeFilter', value);
       }
-    },
-    activePreset(value) {
-      this.$parent.$emit('changeTexts', this.textProperties);
-      this.$parent.$emit('changePreset', this.activePresetObj);
-      this.$parent.$emit('changeMeasurements', {
-        width: this.activePresetObj.width,
-        height: this.activePresetObj.height
-      });
     }
+    // activePreset(value) {
+    //   this.$parent.$emit('changeTexts', this.textProperties);
+    //   this.$parent.$emit('changePreset', this.activePresetObj);
+    //   this.$parent.$emit('changeMeasurements', {
+    //     width: this.activePresetObj.width,
+    //     height: this.activePresetObj.height
+    //   });
+    // }
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text']),
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'preset']),
     strokeWidth: {
       get() {
         return this.stroke.width;
@@ -210,8 +209,8 @@ export default {
           color: value
         });
       }
-		},
-		textAlign: {
+    },
+    textAlign: {
       get() {
         return this.text.align;
       },
@@ -226,25 +225,38 @@ export default {
         brand: this.brand,
         brandDirectionHorizontal: this.brandDirectionHorizontal,
         brandDirectionVertical: this.brandDirectionVertical,
-        logoSize: this.activePresetObj.logo,
-        logo2Size: this.activePresetObj.logo2
+        logoSize: this.preset.info.logo,
+        logo2Size: this.preset.info.logo2
       };
     },
-    activePresetObj() {
-      return this.presets[this.activePreset];
-    },
+    // activePresetObj() {
+    //   return this.preset[this.activePreset];
+    // },
     textProperties() {
       return {
         title: this.title,
         subtitle: this.subtitle,
-        fontSize: this.activePresetObj.fontSize,
-        width: this.activePresetObj.width,
-        height: this.activePresetObj.height
+        fontSize: this.preset.font.size,
+        width: this.preset.measurements.width,
+        height: this.preset.measurements.height
       };
     }
   },
   methods: {
-    ...mapActions('canvas', ['stopLoading', 'startLoading', 'setStroke', 'setFont', 'setText']),
+    ...mapActions('canvas', [
+      'stopLoading',
+      'startLoading',
+      'setStroke',
+      'setFont',
+      'setText',
+      'setPresetInfo',
+      'setMeasurements'
+    ]),
+    setCurrentPreset(preset) {
+      this.setPresetInfo(preset.info);
+      this.setFont(preset.font);
+      this.setMeasurements(preset.measurements);
+    },
     exportImage() {
       const canvas = document.getElementById('canvas');
       const dataURL = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
@@ -296,15 +308,19 @@ export default {
       );
     }
   },
+  created() {
+    if (!this.preset.info.title) {
+      this.setCurrentPreset(this.presets[0]);
+    }
+  },
   mounted() {
     this.$parent.$on('loaded', () => {
       this.$parent.$emit('changeLogo', this.logoProperties);
       this.$parent.$emit('changeTexts', this.textProperties);
-      this.$parent.$emit('changePreset', this.activePresetObj);
-      this.$parent.$emit('changeMeasurements', {
-        width: this.activePresetObj.width,
-        height: this.activePresetObj.height
-      });
+      // this.$parent.$emit('changeMeasurements', {
+      //   width: this.activePresetObj.width,
+      //   height: this.activePresetObj.height
+      // });
     });
 
     this.$on('change:filter', filter => {

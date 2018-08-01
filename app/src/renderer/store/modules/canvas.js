@@ -3,7 +3,6 @@ import * as types from '../mutation-types';
 const state = {
   language: 'en',
   selectedFilterPreset: null,
-  selectedPreset: null,
   loading: false,
   stroke: {
     width: 0,
@@ -25,19 +24,14 @@ const state = {
     subtitle: ''
   },
   measurements: {
-    width: 1200,
-    height: 628,
+    width: 0,
+    height: 0,
   },
   font: {
     size: 0,
     color: '#ffffff',
   },
-  preset: {
-    icon: "facebook",
-    title: "Facebook ad",
-    logo: 160,
-    logo2: 95
-  },
+  presetInfo: {},
   backgroundPath: '',
   backgroundBuffer: null
 };
@@ -63,6 +57,9 @@ const mutations = {
   },
   ['SET_TEXT'](state, options) {
     state.text = Object.assign(state.text, options);
+  },
+  ['SET_PRESETINFO'](state, options) {
+    state.presetInfo = Object.assign(state.presetInfo, options);
   }
 };
 
@@ -87,6 +84,9 @@ const actions = {
   },
   setText({ commit, state, getters }, options) {
     commit('SET_TEXT', options);
+  },
+  setPresetInfo({ commit, state, getters }, options) {
+    commit('SET_PRESETINFO', options);
   }
 }
 
@@ -96,7 +96,13 @@ const getters = {
   isLoading: state => state.loading,
   stroke: state => state.stroke,
   font: state => state.font,
-  text: state => state.text
+  text: state => state.text,
+  measurements: state => state.measurements,
+  preset: state => ({
+    info: state.presetInfo,
+    measurements: state.measurements,
+    font: state.font
+  })
 }
 
 export default {
