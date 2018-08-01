@@ -66,7 +66,7 @@ export default {
     Loader
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke'])
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text'])
   },
   methods: {
     ...mapActions('canvas', ['stopLoading', 'startLoading']),
@@ -320,7 +320,7 @@ export default {
         });
 
         let directionTitle = this.measurements.width / 2 - title.width / 2;
-        switch (this.texts.textAlign) {
+        switch (this.text.align) {
           case 'right':
             directionTitle = this.measurements.width - title.width - 50;
             break;
@@ -331,7 +331,7 @@ export default {
 
         title.set({
           left: directionTitle,
-          textAlign: this.texts.textAlign,
+          textAlign: this.text.align,
           top: this.measurements.height / 2 - title.height / 2
         });
       }
@@ -358,7 +358,7 @@ export default {
         });
 
         let directionSubtitle = this.measurements.width / 2 - subtitle.width / 2;
-        switch (this.texts.textAlign) {
+        switch (this.text.align) {
           case 'right':
             directionSubtitle = this.measurements.width - subtitle.width - 55;
             break;
@@ -369,7 +369,7 @@ export default {
 
         subtitle.set({
           left: directionSubtitle,
-          textAlign: this.texts.textAlign,
+          textAlign: this.text.align,
           top: this.measurements.height / 2 - subtitle.height / 2 + ((title ? title.height : 0) - subtitle.height / 2)
         });
       }
@@ -408,6 +408,12 @@ export default {
       deep: true,
       handler() {
         this.setImageStroke();
+      }
+    },
+    text: {
+      deep: true,
+      handler() {
+        this.setTexts();
       }
     },
     measurements: 'setMeasurements'

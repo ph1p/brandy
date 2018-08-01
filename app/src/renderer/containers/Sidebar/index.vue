@@ -154,7 +154,6 @@ export default {
       brandDirectionVertical: 'bottom',
       title: '',
       subtitle: '',
-      textAlign: 'center',
       activePreset: 0,
       selectedFilterPreset: null,
       filter: {
@@ -191,7 +190,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke']),
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text']),
     strokeWidth: {
       get() {
         return this.stroke.width;
@@ -211,6 +210,16 @@ export default {
           color: value
         });
       }
+		},
+		textAlign: {
+      get() {
+        return this.text.align;
+      },
+      set(value) {
+        this.setText({
+          align: value
+        });
+      }
     },
     logoProperties() {
       return {
@@ -226,7 +235,6 @@ export default {
     },
     textProperties() {
       return {
-        textAlign: this.textAlign,
         title: this.title,
         subtitle: this.subtitle,
         fontSize: this.activePresetObj.fontSize,
@@ -236,7 +244,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions('canvas', ['stopLoading', 'startLoading', 'setStroke']),
+    ...mapActions('canvas', ['stopLoading', 'startLoading', 'setStroke', 'setFont', 'setText']),
     exportImage() {
       const canvas = document.getElementById('canvas');
       const dataURL = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
