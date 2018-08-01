@@ -163,9 +163,9 @@ export default {
       filter: {
         blur: 0,
         filters: []
-			},
-			filterPresets,
-			presets
+      },
+      filterPresets,
+      presets
     };
   },
   watch: {
@@ -281,8 +281,8 @@ export default {
   mounted() {
     this.$parent.$on('loaded', () => {
       this.$parent.$emit('changeLogo', this.logoProperties);
-			this.$parent.$emit('changeTexts', this.textProperties);
-			console.log('changePreset');
+      this.$parent.$emit('changeTexts', this.textProperties);
+      console.log('changePreset');
       this.$parent.$emit('changePreset', this.activePresetObj);
       this.$parent.$emit('changeStroke', this.stroke);
       this.$parent.$emit('changeMeasurements', {

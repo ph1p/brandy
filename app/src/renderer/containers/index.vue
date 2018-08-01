@@ -1,6 +1,6 @@
 <template>
 	<div class="main-container">
-		<Loader :isLoading="loading" :text="'Load Image...'" />
+		<Loader :isLoading="isLoading" :text="'Load Image...'" />
 
 		<Sidebar v-if="background"></Sidebar>
 
@@ -8,17 +8,18 @@
 			<div class="" v-if="!background">drag image</div>
 
 			<div class="stage" ref="stageElement" v-show="background">
-				<div class="stage-info" v-if="preset !== null && !loading">
+				<div class="stage-info" v-if="preset !== null && !isLoading">
 					<span class="stage-info-title">{{preset.title}}</span>
 					<span class="stage-info-measurements">{{measurements.width}}px x {{measurements.height}}px</span>
 				</div>
-				<canvas v-show="!loading" id="canvas" ref="canvasElement"></canvas>
+				<canvas v-show="!isLoading" id="canvas" ref="canvasElement"></canvas>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex';
 import { ipcRenderer } from 'electron';
 import { fabric } from 'fabric';
 import Sidebar from './Sidebar';
@@ -52,7 +53,6 @@ export default {
     return {
       stroke: {},
       settings: {},
-      loading: false,
       canvas: null,
       filter: {},
       texts: {},
@@ -66,7 +66,11 @@ export default {
     Sidebar,
     Loader
   },
+  computed: {
+    ...mapGetters('canvas', ['isLoading'])
+  },
   methods: {
+    ...mapActions('canvas', ['stopLoading', 'startLoading']),
     setImageStroke() {
       const leftStrokeCanvas = this.canvas.getItemByName('leftStroke');
       const topStrokeCanvas = this.canvas.getItemByName('topStroke');
@@ -77,7 +81,7 @@ export default {
       const strokeColor = this.stroke.color || '#ffffff';
 
       const height = this.canvas.getHeight();
-			const width = this.canvas.getWidth();
+      const width = this.canvas.getWidth();
 
       const lines = [
         {
@@ -233,7 +237,7 @@ export default {
             break;
         }
 
-        this.loading = false;
+        this.stopLoading();
 
         this.canvas.renderAll();
       });
@@ -439,11 +443,17 @@ export default {
 
         this.canvas.renderAll();
 
-        this.loading = false;
+        this.stopLoading();
       });
     });
   },
   mounted() {
+    this.$store.dispatch('canvas/updateSettings', {
+      backgroundPath: 'fsdfdsf'
+    });
+
+    console.log(this.$store.getters['canvas/isLoading']);
+
     fabric.filterBackend = new fabric.WebglFilterBackend();
 
     if (!this.canvas) {
@@ -528,7 +538,7 @@ export default {
     };
 
     document.ondragend = () => {
-      this.loading = true;
+      this.startLoading();
       return false;
     };
 
@@ -537,14 +547,15 @@ export default {
       e.stopPropagation();
 
       this.background = e.dataTransfer.files[0].path;
-			this.loading = true;
 
-			this.canvas.clear();
+      this.canvas.clear();
 
       ipcRenderer.send('compress-image', {
-        image: this.background,
+				image: this.background,
         isBackground: true
       });
+
+			this.startLoading();
 
       WebFont.load({
         google: {

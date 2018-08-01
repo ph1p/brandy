@@ -12,8 +12,7 @@ export default new Vuex.Store({
   modules,
   plugins: [
     createPersistedState({
-      key: storageName,
-      paths: ['canvas']
+      key: storageName
     })
   ],
   strict: process.env.NODE_ENV !== 'production'
