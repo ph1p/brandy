@@ -17,7 +17,6 @@
 import { remote, ipcRenderer } from 'electron';
 
 import { addClass, removeClass, mainDir } from 'renderer/utils';
-import store from 'renderer/vuex/store';
 
 import { exec } from 'child_process';
 
@@ -35,7 +34,6 @@ ipcRenderer.on('is-window-blurred', () => {
 });
 
 export default {
-  store,
   methods: {
     closeApp() {
       win.close();
