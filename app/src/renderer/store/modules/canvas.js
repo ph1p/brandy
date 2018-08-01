@@ -70,6 +70,18 @@ const mutations = {
   },
   ['SET_BACKGROUND_PATH'](state, path) {
     state.backgroundPath = path;
+  },
+  ['SET_FILTER_BLUR'](state, blur) {
+    state.filter.blur = blur;
+  },
+  ['ADD_FILTER'](state, filter) {
+    state.filter.filters = state.filter.filters.concat(filter);
+  },
+  ['UPDATE_FILTER'](state, filter) {
+    state.filter.filters[filter.index] = Object.assign(state.filter.filters[filter.index], filter);
+  },
+  ['REMOVE_FILTER'](state, index) {
+    state.filter.filters = state.filter.filters.filter((f, k) => k !== index);
   }
 };
 
@@ -103,6 +115,22 @@ const actions = {
   },
   setBackgroundPath({ commit, state, getters }, path) {
     commit('SET_BACKGROUND_PATH', path);
+  },
+  setFilterBlur({ commit, state, getters }, blur) {
+    commit('SET_FILTER_BLUR', blur);
+  },
+  addFilter({ commit, state, getters }, filter) {
+    commit('ADD_FILTER', {
+      mode: filter.mode,
+      color: filter.color,
+      opacity: filter.opacity
+    });
+  },
+  updateFilter({ commit, state, getters }, filter) {
+    commit('UPDATE_FILTER', filter);
+  },
+  removeFilter({ commit, state, getters }, index) {
+    commit('REMOVE_FILTER', index);
   }
 }
 
@@ -116,6 +144,8 @@ const getters = {
   measurements: state => state.measurements,
   logo: state => state.logo,
   backgroundPath: state => state.backgroundPath,
+  filterBlur: state => state.filter.blur,
+  filters: state => state.filter.filters,
   preset: state => ({
     info: state.presetInfo,
     measurements: state.measurements,

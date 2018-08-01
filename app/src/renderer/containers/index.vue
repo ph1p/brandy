@@ -62,7 +62,18 @@ export default {
     Loader
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'measurements', 'preset', 'logo', 'backgroundPath'])
+    ...mapGetters('canvas', [
+      'isLoading',
+      'filters',
+      'stroke',
+      'font',
+      'text',
+      'measurements',
+      'preset',
+      'logo',
+      'backgroundPath',
+      'filterBlur'
+    ])
   },
   methods: {
     ...mapActions('canvas', ['stopLoading', 'startLoading', 'setBackgroundPath']),
@@ -238,16 +249,16 @@ export default {
       const f = fabric.Image.filters;
       const img = canvas.getItemByName('backgroundImage');
       img.filters = [];
-      if (this.filter) {
-        if (this.filter.blur) {
-          const blur = new fabric.Image.filters.Blur({
-            blur: parseFloat(this.filter.blur)
-          });
-          img.filters.push(blur);
-        }
+      if (this.filterBlur) {
+        const blur = new fabric.Image.filters.Blur({
+          blur: this.filterBlur
+        });
+        img.filters.push(blur);
+      }
 
-        if (this.filter.filters && this.filter.filters.length > 0) {
-          this.filter.filters.forEach(({ mode, opacity, color }) => {
+      if (this.filters) {
+        if (this.filters && this.filters.length > 0) {
+          this.filters.forEach(({ mode, opacity, color }) => {
             const filter = new fabric.Image.filters.BlendColor({
               color: color,
               alpha: parseFloat(opacity),
@@ -385,17 +396,22 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.scaleStage);
-    this.$off('changeFilter');
     this.$off('changeTexts');
     this.$off('changeLogo');
     this.$off('changeBackground');
   },
   watch: {
     texts: 'setTexts',
-    filter: 'setFilters',
+    filterBlur: 'setFilters',
+    filters: {
+      deep: true,
+      handler() {
+        this.setFilters();
+      }
+    },
     backgroundPath(path) {
       if (path !== '') {
-				canvas.clear();
+        canvas.clear();
         this.startLoading();
         ipcRenderer.send('compress-image', {
           image: path,
@@ -522,10 +538,6 @@ export default {
         }
       });
     }
-
-    this.$on('changeFilter', opt => {
-      this.filter = opt;
-    });
 
     this.$on('changeTexts', opt => {
       this.texts = opt;

@@ -72,23 +72,26 @@
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="areFiltersOpen">
 
-					<Filters :filter="filter" :filterPresets="filterPresets" />
+					<Filters />
 
 				</div>
 			</div>
 
-			<div class="sidebar__sectionsItem">
+			<div class="sidebar__sectionsItem stroke">
 				<div class="sidebar__sectionsItem-title" @click="areStrokeOptionsOpen = !areStrokeOptionsOpen" :class="{active: areStrokeOptionsOpen}">
 					Stroke
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="areStrokeOptionsOpen">
 
-					<label for="strokeWidth">Width</label>
-					<input type="range" v-model="strokeWidth" name="strokeWidth" min="0" max="20" step="1">
+					<div class="stroke__width">
+						<label for="strokeWidth">Width</label>
+						<input type="range" v-model="strokeWidth" name="strokeWidth" min="0" max="20" step="1">
+					</div>
 
-					<label for="strokeColor">Color</label>
-					<input type="color" name="strokeColor" v-model="strokeColor" />
-
+					<div class="stroke__color">
+						<label for="strokeColor">Color</label>
+						<input type="color" name="strokeColor" v-model="strokeColor" />
+					</div>
 				</div>
 			</div>
 
@@ -132,7 +135,7 @@ import { mapGetters, mapActions } from 'vuex';
 import { remote, ipcRenderer } from 'electron';
 import Filters from '../../components/Filters';
 
-import { presets, filterPresets } from '../../presets';
+import { presets } from '../../presets';
 
 export default {
   name: 'sidebar',
@@ -150,23 +153,12 @@ export default {
       subtitle: '',
       activePreset: 0,
       selectedFilterPreset: null,
-      filter: {
-        blur: 0,
-        filters: []
-      },
-      filterPresets,
       presets
     };
   },
   watch: {
     textProperties(value) {
       this.$parent.$emit('changeTexts', value);
-    },
-    filter: {
-      deep: true,
-      handler(value) {
-        this.$parent.$emit('changeFilter', value);
-      }
     }
   },
   computed: {
@@ -200,7 +192,7 @@ export default {
           color: value
         });
       }
-		},
+    },
     logoType: {
       get() {
         return this.logo.type;
@@ -210,7 +202,7 @@ export default {
           type: value
         });
       }
-		},
+    },
     logoDirectionH: {
       get() {
         return this.logo.directionH;
@@ -260,8 +252,8 @@ export default {
       'setText',
       'setPresetInfo',
       'setMeasurements',
-			'setLogo',
-			'setBackgroundPath'
+      'setLogo',
+      'setBackgroundPath'
     ]),
     setCurrentPreset(preset) {
       this.setPresetInfo(preset.info);
@@ -312,9 +304,9 @@ export default {
         fileNames => {
           if (fileNames === undefined) return;
 
-					const fileName = fileNames[0];
+          const fileName = fileNames[0];
 
-					this.setBackgroundPath(fileName);
+          this.setBackgroundPath(fileName);
         }
       );
     }
@@ -330,18 +322,6 @@ export default {
       this.$parent.$emit('changeTexts', this.textProperties);
     });
 
-    this.$on('change:filter', filter => {
-      this.filter = filter;
-    });
-
-    this.$on('remove:filter', index => {
-      this.filter.filters = this.filter.filters.filter((filter, i) => i !== index);
-    });
-
-    this.$on('add:filter', filter => {
-      this.filter.filters = this.filter.filters.concat(filter);
-    });
-
     document.onkeydown = event => {
       if ((event.ctrlKey || event.metaKey) && event.which == 83) {
         event.preventDefault();
@@ -354,18 +334,6 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-input[type="color"] {
-	-webkit-appearance: none;
-	border: none;
-	width: 32px;
-	height: 32px;
-}
-input[type="color"]::-webkit-color-swatch-wrapper {
-	padding: 0;
-}
-input[type="color"]::-webkit-color-swatch {
-	border: none;
-}
 .sidebar {
   width: 300px;
   height: 100%;
@@ -437,12 +405,12 @@ input[type="color"]::-webkit-color-swatch {
       grid-gap: 10px;
       width: 100%;
 
-			&__color {
-				grid-column: span 2;
-				label {
-					font-weight: bold;
-				}
-			}
+      &__color {
+        grid-column: span 2;
+        label {
+          font-weight: bold;
+        }
+      }
 
       &__section {
         border: 1px solid lighten($mainColor, 35%);

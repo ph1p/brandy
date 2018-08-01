@@ -49,6 +49,23 @@ export default {
 
 
 <style lang="scss">
+input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  width: 26px;
+  display: inline-block;
+  height: 24px;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  border-radius: 100%;
+	border: 1px solid #999;
+	padding: 2px;
+  overflow: hidden;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 100%;
+}
 .titlebar {
   position: fixed;
   -webkit-app-region: drag;
