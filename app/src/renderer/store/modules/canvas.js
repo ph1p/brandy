@@ -6,17 +6,21 @@ const state = {
   loading: false,
   stroke: {
     width: 0,
-    color: '#fff'
+    color: '#ffffff'
   },
   filter: {
     blur: 0,
     filters: []
   },
   logo: {
-    image: 'b1w',
+    type: 'b1w',
     directionH: 'center',
     directionV: 'bottom',
-    color: '#ffffff'
+    color: '#ffffff',
+    images: [{
+      name: '',
+      image: ''
+    }]
   },
   text: {
     align: 'center',
@@ -60,6 +64,12 @@ const mutations = {
   },
   ['SET_PRESETINFO'](state, options) {
     state.presetInfo = Object.assign(state.presetInfo, options);
+  },
+  ['SET_LOGO'](state, options) {
+    state.logo = Object.assign(state.logo, options);
+  },
+  ['SET_BACKGROUND_PATH'](state, path) {
+    state.backgroundPath = path;
   }
 };
 
@@ -87,6 +97,12 @@ const actions = {
   },
   setPresetInfo({ commit, state, getters }, options) {
     commit('SET_PRESETINFO', options);
+  },
+  setLogo({ commit, state, getters }, options) {
+    commit('SET_LOGO', options);
+  },
+  setBackgroundPath({ commit, state, getters }, path) {
+    commit('SET_BACKGROUND_PATH', path);
   }
 }
 
@@ -98,6 +114,8 @@ const getters = {
   font: state => state.font,
   text: state => state.text,
   measurements: state => state.measurements,
+  logo: state => state.logo,
+  backgroundPath: state => state.backgroundPath,
   preset: state => ({
     info: state.presetInfo,
     measurements: state.measurements,

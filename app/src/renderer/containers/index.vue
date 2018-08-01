@@ -2,12 +2,12 @@
 	<div class="main-container">
 		<Loader :isLoading="isLoading" :text="'Load Image...'" />
 
-		<Sidebar v-if="background"></Sidebar>
+		<Sidebar v-if="backgroundPath"></Sidebar>
 
-		<div class="content" ref="contentElement" :style="{gridColumn: background ? '' : '1/-1'}">
-			<div class="" v-if="!background">drag image</div>
+		<div class="content" ref="contentElement" :style="{gridColumn: backgroundPath ? '' : '1/-1'}">
+			<div class="" v-if="!backgroundPath">drag image</div>
 
-			<div class="stage" ref="stageElement" v-show="background">
+			<div class="stage" ref="stageElement" v-show="backgroundPath">
 				<div class="stage-info" v-if="preset !== null && !isLoading">
 					<span class="stage-info-title">{{preset.info.title}}</span>
 					<span class="stage-info-measurements">{{measurements.width}}px x {{measurements.height}}px</span>
@@ -53,11 +53,8 @@ export default {
   name: 'main-page',
   data() {
     return {
-      settings: {},
       filter: {},
-      texts: {},
-      logo: {},
-      background: ''
+      texts: {}
     };
   },
   components: {
@@ -65,10 +62,10 @@ export default {
     Loader
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'measurements', 'preset'])
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'measurements', 'preset', 'logo', 'backgroundPath'])
   },
   methods: {
-    ...mapActions('canvas', ['stopLoading', 'startLoading']),
+    ...mapActions('canvas', ['stopLoading', 'startLoading', 'setBackgroundPath']),
     setImageStroke() {
       const leftStrokeCanvas = canvas.getItemByName('leftStroke');
       const topStrokeCanvas = canvas.getItemByName('topStroke');
@@ -182,22 +179,14 @@ export default {
       let image;
       let logoSize;
 
-      switch (this.logo.brand) {
+      switch (this.logo.type) {
         case 'b1w':
           image = logo;
-          logoSize = this.logo.logoSize;
+          logoSize = this.preset.info.logo;
           break;
         case 'b2w':
           image = logo2;
-          logoSize = this.logo.logo2Size;
-          break;
-        case 'b1b':
-          image = logoBlack;
-          logoSize = this.logo.logoSize;
-          break;
-        case 'b2b':
-          image = logo2Black;
-          logoSize = this.logo.logo2Size;
+          logoSize = this.preset.info.logo2;
           break;
       }
       const logoElement = canvas.getItemByName('logo');
@@ -209,6 +198,12 @@ export default {
 
         svg.set('name', 'logo');
 
+        if ((svg.isSameColor && svg.isSameColor()) || !svg.paths) {
+          svg.set({
+            fill: this.logo.color
+          });
+        }
+
         svg.scaleToWidth(logoSize);
 
         canvas.add(svg);
@@ -216,7 +211,7 @@ export default {
         svg.top = canvas.getHeight() - svg.height * svg.scaleY - 40;
         svg.left = canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
 
-        switch (this.logo.brandDirectionHorizontal) {
+        switch (this.logo.directionH) {
           case 'right':
             svg.left = canvas.getWidth() - svg.width * svg.scaleX - 50;
             break;
@@ -225,7 +220,7 @@ export default {
             break;
         }
 
-        switch (this.logo.brandDirectionVertical) {
+        switch (this.logo.directionV) {
           case 'top':
             svg.top = 50;
             break;
@@ -397,8 +392,17 @@ export default {
   },
   watch: {
     texts: 'setTexts',
-    logo: 'setLogo',
     filter: 'setFilters',
+    backgroundPath(path) {
+      if (path !== '') {
+				canvas.clear();
+        this.startLoading();
+        ipcRenderer.send('compress-image', {
+          image: path,
+          isBackground: true
+        });
+      }
+    },
     stroke: {
       deep: true,
       handler() {
@@ -417,15 +421,22 @@ export default {
         this.setMeasurements();
       }
     },
+    logo: {
+      deep: true,
+      handler() {
+        this.setLogo();
+      }
+    },
     preset: {
       deep: true,
       handler() {
-				this.scaleStage();
-				this.setLogo();
+        this.scaleStage();
+        this.setLogo();
       }
     }
   },
   created() {
+    this.setBackgroundPath('');
     ipcRenderer.on('compressed-background-image', (event, image) => {
       const blob = new Blob([image], {
         type: 'image/jpeg'
@@ -465,10 +476,6 @@ export default {
     });
   },
   mounted() {
-    this.$store.dispatch('canvas/updateSettings', {
-      backgroundPath: 'fsdfdsf'
-    });
-
     fabric.filterBackend = new fabric.WebglFilterBackend();
 
     if (!canvas) {
@@ -524,10 +531,6 @@ export default {
       this.texts = opt;
     });
 
-    this.$on('changeLogo', opt => {
-      this.logo = opt;
-    });
-
     // SCALE
     window.addEventListener('resize', this.scaleStage);
 
@@ -549,16 +552,7 @@ export default {
       e.preventDefault();
       e.stopPropagation();
 
-      this.background = e.dataTransfer.files[0].path;
-
-      canvas.clear();
-
-      ipcRenderer.send('compress-image', {
-        image: this.background,
-        isBackground: true
-      });
-
-      this.startLoading();
+      this.setBackgroundPath(e.dataTransfer.files[0].path);
 
       WebFont.load({
         google: {

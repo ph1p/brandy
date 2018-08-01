@@ -28,38 +28,37 @@
 				<div class="sidebar__sectionsItem-content" v-if="areLogosOpen">
 					<div class="brand">
 
-						<div class="brand__section" :class="{active: brand === 'b1w'}" @click="brand = 'b1w'">
+						<div class="brand__color">
+							<label for="logoColor">Color</label>
+							<input type="color" name="logoColor" v-model="logoColor" />
+						</div>
+
+						<div class="brand__section" :class="{active: logoType === 'b1w'}" @click="logoType = 'b1w'">
 							<img src="~renderer/assets/img/logo.svg" />
 						</div>
-						<div class="brand__section" :class="{active: brand === 'b2w'}" @click="brand = 'b2w'">
+						<div class="brand__section" :class="{active: logoType === 'b2w'}" @click="logoType = 'b2w'">
 							<img src="~renderer/assets/img/logo2.svg" />
-						</div>
-						<div class="brand__section" :class="{active: brand === 'b1b'}" @click="brand = 'b1b'">
-							<img src="~renderer/assets/img/logo_black.svg" />
-						</div>
-						<div class="brand__section" :class="{active: brand === 'b2b'}" @click="brand = 'b2b'">
-							<img src="~renderer/assets/img/logo2_black.svg" />
 						</div>
 
 						<ul class="brand__directionHorizontal">
-							<li @click="brandDirectionHorizontal = 'left'" :class="{active: brandDirectionHorizontal === 'left'}">
+							<li @click="logoDirectionH = 'left'" :class="{active: logoDirectionH === 'left'}">
 								<img src="~renderer/assets/img/icons/align_left.svg" />
 							</li>
-							<li @click="brandDirectionHorizontal = 'center'" :class="{active: brandDirectionHorizontal === 'center'}">
+							<li @click="logoDirectionH = 'center'" :class="{active: logoDirectionH === 'center'}">
 								<img src="~renderer/assets/img/icons/align_mid.svg" />
 							</li>
-							<li @click="brandDirectionHorizontal = 'right'" :class="{active: brandDirectionHorizontal === 'right'}">
+							<li @click="logoDirectionH = 'right'" :class="{active: logoDirectionH === 'right'}">
 								<img src="~renderer/assets/img/icons/align_right.svg" />
 							</li>
 						</ul>
 						<ul class="brand__directionVertical">
-							<li @click="brandDirectionVertical = 'top'" :class="{active: brandDirectionVertical === 'top'}">
+							<li @click="logoDirectionV = 'top'" :class="{active: logoDirectionV === 'top'}">
 								<img src="~renderer/assets/img/icons/top_align.svg" />
 							</li>
-							<li @click="brandDirectionVertical = 'center'" :class="{active: brandDirectionVertical === 'center'}">
+							<li @click="logoDirectionV = 'center'" :class="{active: logoDirectionV === 'center'}">
 								<img src="~renderer/assets/img/icons/center_align.svg" />
 							</li>
-							<li @click="brandDirectionVertical = 'bottom'" :class="{active: brandDirectionVertical === 'bottom'}">
+							<li @click="logoDirectionV = 'bottom'" :class="{active: logoDirectionV === 'bottom'}">
 								<img src="~renderer/assets/img/icons/bottom_align.svg" />
 							</li>
 						</ul>
@@ -147,10 +146,6 @@ export default {
       areFiltersOpen: false,
       areFontsOpen: false,
       areStrokeOptionsOpen: false,
-      backgroundImage: '',
-      brand: 'b1w',
-      brandDirectionHorizontal: 'center',
-      brandDirectionVertical: 'bottom',
       title: '',
       subtitle: '',
       activePreset: 0,
@@ -167,29 +162,15 @@ export default {
     textProperties(value) {
       this.$parent.$emit('changeTexts', value);
     },
-    logoProperties(value) {
-      this.$parent.$emit('changeLogo', value);
-    },
-    backgroundImage(path) {
-      this.$parent.$emit('changeBackground', path);
-    },
     filter: {
       deep: true,
       handler(value) {
         this.$parent.$emit('changeFilter', value);
       }
     }
-    // activePreset(value) {
-    //   this.$parent.$emit('changeTexts', this.textProperties);
-    //   this.$parent.$emit('changePreset', this.activePresetObj);
-    //   this.$parent.$emit('changeMeasurements', {
-    //     width: this.activePresetObj.width,
-    //     height: this.activePresetObj.height
-    //   });
-    // }
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'preset']),
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'preset', 'logo']),
     strokeWidth: {
       get() {
         return this.stroke.width;
@@ -210,6 +191,46 @@ export default {
         });
       }
     },
+    logoColor: {
+      get() {
+        return this.logo.color;
+      },
+      set(value) {
+        this.setLogo({
+          color: value
+        });
+      }
+		},
+    logoType: {
+      get() {
+        return this.logo.type;
+      },
+      set(value) {
+        this.setLogo({
+          type: value
+        });
+      }
+		},
+    logoDirectionH: {
+      get() {
+        return this.logo.directionH;
+      },
+      set(value) {
+        this.setLogo({
+          directionH: value
+        });
+      }
+    },
+    logoDirectionV: {
+      get() {
+        return this.logo.directionV;
+      },
+      set(value) {
+        this.setLogo({
+          directionV: value
+        });
+      }
+    },
     textAlign: {
       get() {
         return this.text.align;
@@ -220,18 +241,6 @@ export default {
         });
       }
     },
-    logoProperties() {
-      return {
-        brand: this.brand,
-        brandDirectionHorizontal: this.brandDirectionHorizontal,
-        brandDirectionVertical: this.brandDirectionVertical,
-        logoSize: this.preset.info.logo,
-        logo2Size: this.preset.info.logo2
-      };
-    },
-    // activePresetObj() {
-    //   return this.preset[this.activePreset];
-    // },
     textProperties() {
       return {
         title: this.title,
@@ -250,7 +259,9 @@ export default {
       'setFont',
       'setText',
       'setPresetInfo',
-      'setMeasurements'
+      'setMeasurements',
+			'setLogo',
+			'setBackgroundPath'
     ]),
     setCurrentPreset(preset) {
       this.setPresetInfo(preset.info);
@@ -301,9 +312,9 @@ export default {
         fileNames => {
           if (fileNames === undefined) return;
 
-          const fileName = fileNames[0];
+					const fileName = fileNames[0];
 
-          this.backgroundImage = fileName;
+					this.setBackgroundPath(fileName);
         }
       );
     }
@@ -317,10 +328,6 @@ export default {
     this.$parent.$on('loaded', () => {
       this.$parent.$emit('changeLogo', this.logoProperties);
       this.$parent.$emit('changeTexts', this.textProperties);
-      // this.$parent.$emit('changeMeasurements', {
-      //   width: this.activePresetObj.width,
-      //   height: this.activePresetObj.height
-      // });
     });
 
     this.$on('change:filter', filter => {
@@ -347,6 +354,18 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+input[type="color"] {
+	-webkit-appearance: none;
+	border: none;
+	width: 32px;
+	height: 32px;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+	border: none;
+}
 .sidebar {
   width: 300px;
   height: 100%;
@@ -414,9 +433,16 @@ export default {
     // LOGOS
     .brand {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       grid-gap: 10px;
       width: 100%;
+
+			&__color {
+				grid-column: span 2;
+				label {
+					font-weight: bold;
+				}
+			}
 
       &__section {
         border: 1px solid lighten($mainColor, 35%);
@@ -441,9 +467,6 @@ export default {
       }
       &__directionHorizontal,
       &__directionVertical {
-        grid-row: 2;
-        grid-column: span 2;
-
         margin: 0;
         padding: 0;
         display: inline-block;
