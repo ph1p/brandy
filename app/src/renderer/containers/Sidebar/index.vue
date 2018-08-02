@@ -26,21 +26,20 @@
 					Logo
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="areLogosOpen">
-					<div class="brand">
+					<div class="logo">
+						<div v-for="logo in logos" class="logo__section"
+							:class="{active: selectedLogo === logo.name}"
+							@click="selectedLogo = selectedLogo === logo.name ? '' : logo.name"
+							:key="logo.name">
+							<div class="logo__sectionImage" v-html="logo.data"></div>
+						</div>
 
-						<div class="brand__color">
+						<div class="logo__color" v-if="selectedLogo">
 							<label for="logoColor">Color</label>
 							<input type="color" name="logoColor" v-model="logoColor" />
 						</div>
 
-						<div class="brand__section" :class="{active: logoType === 'b1w'}" @click="logoType = 'b1w'">
-							<img src="~renderer/assets/img/logo.svg" />
-						</div>
-						<div class="brand__section" :class="{active: logoType === 'b2w'}" @click="logoType = 'b2w'">
-							<img src="~renderer/assets/img/logo2.svg" />
-						</div>
-
-						<ul class="brand__directionHorizontal">
+						<ul class="logo__directionHorizontal" v-if="selectedLogo">
 							<li @click="logoDirectionH = 'left'" :class="{active: logoDirectionH === 'left'}">
 								<img src="~renderer/assets/img/icons/align_left.svg" />
 							</li>
@@ -51,7 +50,7 @@
 								<img src="~renderer/assets/img/icons/align_right.svg" />
 							</li>
 						</ul>
-						<ul class="brand__directionVertical">
+						<ul class="logo__directionVertical" v-if="selectedLogo">
 							<li @click="logoDirectionV = 'top'" :class="{active: logoDirectionV === 'top'}">
 								<img src="~renderer/assets/img/icons/top_align.svg" />
 							</li>
@@ -135,6 +134,9 @@ import { mapGetters, mapActions } from 'vuex';
 import { remote, ipcRenderer } from 'electron';
 import Filters from '../../components/Filters';
 
+import logo from '../../assets/img/logo.svg';
+import logo2 from '../../assets/img/logo2.svg';
+
 import { presets } from '../../presets';
 
 export default {
@@ -162,7 +164,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'preset', 'logo']),
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'preset', 'logo', 'logos']),
     strokeWidth: {
       get() {
         return this.stroke.width;
@@ -190,16 +192,6 @@ export default {
       set(value) {
         this.setLogo({
           color: value
-        });
-      }
-    },
-    logoType: {
-      get() {
-        return this.logo.type;
-      },
-      set(value) {
-        this.setLogo({
-          type: value
         });
       }
     },
@@ -233,6 +225,16 @@ export default {
         });
       }
     },
+    selectedLogo: {
+      get() {
+        return this.logo.current;
+      },
+      set(value) {
+        this.setLogo({
+          current: value
+        });
+      }
+    },
     textProperties() {
       return {
         title: this.title,
@@ -262,7 +264,6 @@ export default {
     },
     exportImage() {
       const canvas = document.getElementById('canvas');
-      const dataURL = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
 
       remote.dialog.showSaveDialog(
         {
@@ -280,12 +281,13 @@ export default {
           if (fileName === undefined) return;
 
           ipcRenderer.send('compress-image', {
-            image: dataURL,
-            isBase64: true,
+            name: 'export-image',
+            type: 'path',
+            data: canvas.toDataURL('image/png'),
             savePath: fileName
           });
 
-          ipcRenderer.on('compressed-image', (event, image) => {
+          ipcRenderer.on('compressed-image-export-image', (event, image) => {
             console.log(image);
           });
         }
@@ -399,7 +401,7 @@ export default {
     }
 
     // LOGOS
-    .brand {
+    .logo {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       grid-gap: 10px;
@@ -426,11 +428,16 @@ export default {
         &:hover {
           border-color: $blue;
         }
-        img {
+        &Image {
           cursor: pointer;
           display: inline-block;
           align-self: center;
           width: 50%;
+          svg {
+            path {
+              fill: #fff;
+            }
+          }
         }
       }
       &__directionHorizontal,

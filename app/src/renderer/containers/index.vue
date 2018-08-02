@@ -43,12 +43,6 @@ fabric.Canvas.prototype.getItemByName = function(name) {
   return object;
 };
 
-import logo from '../assets/img/logo.svg';
-import logo2 from '../assets/img/logo2.svg';
-
-import logoBlack from '../assets/img/logo_black.svg';
-import logo2Black from '../assets/img/logo2_black.svg';
-
 export default {
   name: 'main-page',
   data() {
@@ -72,7 +66,8 @@ export default {
       'preset',
       'logo',
       'backgroundPath',
-      'filterBlur'
+      'filterBlur',
+      'currentLogo'
     ])
   },
   methods: {
@@ -177,73 +172,89 @@ export default {
         img.set({
           scaleY: scaleFactor,
           scaleX: scaleFactor,
-          left: width / 2,
-          top: height / 2,
-          originX: 'center',
-          originY: 'center'
+          left: 0,
+          top: 0
+          // left: width / 2,
+          // top: height / 2,
+          // originX: 'center',
+          // originY: 'center'
         });
+
+        this.setLogoSettings();
 
         canvas.renderAll();
       }
     },
-    setLogo() {
-      let image;
+    setLogoImage() {
+      // ipcRenderer.send('compress-image', {
+      //   data: '/Users/phlp/Downloads/brandy/app/dist/imgs/logo.svg',
+      //   name: 'logo'
+      // });
+      const logoElement = canvas.getItemByName('logo');
+
+      if (logoElement) {
+        canvas.remove(logoElement);
+      }
+
+      if (this.currentLogo) {
+        fabric.loadSVGFromString(this.currentLogo.data, (logoImg, options) => {
+          let svg = fabric.util.groupSVGElements(logoImg, options);
+          svg.set('name', 'logo');
+
+          canvas.add(svg);
+
+          this.setLogoSettings();
+        });
+      }
+    },
+    setLogoSettings() {
       let logoSize;
 
-      switch (this.logo.type) {
-        case 'b1w':
-          image = logo;
+      switch (this.logo.current) {
+        case 'logo_appcom1':
           logoSize = this.preset.info.logo;
           break;
-        case 'b2w':
-          image = logo2;
+        case 'logo_appcom2':
           logoSize = this.preset.info.logo2;
           break;
       }
-      const logoElement = canvas.getItemByName('logo');
 
-      fabric.loadSVGFromURL(image, (logoImg, options) => {
-        const svg = fabric.util.groupSVGElements(logoImg, options);
+      const svg = canvas.getItemByName('logo');
 
-        canvas.remove(canvas.getItemByName('logo'));
-
-        svg.set('name', 'logo');
-
-        if ((svg.isSameColor && svg.isSameColor()) || !svg.paths) {
-          svg.set({
-            fill: this.logo.color
-          });
-        }
-
+      if (svg && this.logo) {
         svg.scaleToWidth(logoSize);
 
-        canvas.add(svg);
-
-        svg.top = canvas.getHeight() - svg.height * svg.scaleY - 40;
-        svg.left = canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
+        let top = canvas.getHeight() - svg.height * svg.scaleY - 40;
+        let left = canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
 
         switch (this.logo.directionH) {
           case 'right':
-            svg.left = canvas.getWidth() - svg.width * svg.scaleX - 50;
+            left = canvas.getWidth() - svg.width * svg.scaleX - 50;
             break;
           case 'left':
-            svg.left = 50;
+            left = 50;
             break;
         }
 
         switch (this.logo.directionV) {
           case 'top':
-            svg.top = 50;
+            top = 50;
             break;
           case 'center':
-            svg.top = canvas.getHeight() / 2 - svg.height * svg.scaleY / 2;
+            top = canvas.getHeight() / 2 - svg.height * svg.scaleY / 2;
             break;
         }
+
+        svg.set({
+          fill: this.logo.color,
+          left,
+          top
+        });
 
         this.stopLoading();
 
         canvas.renderAll();
-      });
+      }
     },
     setFilters() {
       const f = fabric.Image.filters;
@@ -403,6 +414,12 @@ export default {
   watch: {
     texts: 'setTexts',
     filterBlur: 'setFilters',
+    currentLogo: {
+      deep: true,
+      handler() {
+        this.setLogoImage();
+      }
+    },
     filters: {
       deep: true,
       handler() {
@@ -414,8 +431,9 @@ export default {
         canvas.clear();
         this.startLoading();
         ipcRenderer.send('compress-image', {
-          image: path,
-          isBackground: true
+          data: path,
+          name: 'background',
+          type: 'buffer'
         });
       }
     },
@@ -439,21 +457,27 @@ export default {
     },
     logo: {
       deep: true,
-      handler() {
-        this.setLogo();
+      handler(v) {
+        this.setLogoSettings();
       }
     },
     preset: {
       deep: true,
       handler() {
         this.scaleStage();
-        this.setLogo();
+        this.setLogoImage();
+        this.setLogoSettings();
       }
     }
   },
   created() {
     this.setBackgroundPath('');
-    ipcRenderer.on('compressed-background-image', (event, image) => {
+
+    ipcRenderer.on('compressed-image-logo', data => {
+      console.log(data);
+    });
+
+    ipcRenderer.on('compressed-image-background', (event, image) => {
       const blob = new Blob([image], {
         type: 'image/jpeg'
       });
@@ -482,7 +506,8 @@ export default {
         this.scaleStage();
         this.setTexts();
         this.setFilters();
-        this.setLogo();
+        this.setLogoImage();
+        this.setLogoSettings();
         this.setImageStroke();
 
         canvas.renderAll();
@@ -498,8 +523,6 @@ export default {
       canvas = new fabric.Canvas(this.$refs.canvasElement, {
         controlsAboveOverlay: true,
         preserveObjectStacking: true,
-
-        perPixelTargetFind: true,
         enableRetinaScaling: true,
         renderOnAddRemove: true
       });
@@ -510,31 +533,26 @@ export default {
       canvas.setWidth(canvas.height);
       canvas.hasBorders = false;
 
-      canvas.on('object:moving', function(e) {
+      canvas.on('object:moving', (e) => {
         var obj = e.target;
-        // if object is too big ignore
-        if (obj.currentHeight > obj.canvas.height || obj.currentWidth > obj.canvas.width) {
-          return;
+
+        let { height: objectHeight, width: objectWidth } = obj;
+        let { width: canvasWidth, height: canvasHeight } = obj.canvas;
+
+        if (obj.top > 0) {
+          obj.top = 0;
         }
-        obj.setCoords();
-        // top-left  corner
-        if (obj.getBoundingRect().top < 0 || obj.getBoundingRect().left < 0) {
-          obj.top = Math.max(obj.top, obj.top - obj.getBoundingRect().top);
-          obj.left = Math.max(obj.left, obj.left - obj.getBoundingRect().left);
+
+        if (Math.abs(obj.top) > Math.abs(canvasHeight - objectHeight * obj.scaleY)) {
+          obj.top = canvasHeight - (objectHeight * obj.scaleY);
         }
-        // bot-right corner
-        if (
-          obj.getBoundingRect().top + obj.getBoundingRect().height > obj.canvas.height ||
-          obj.getBoundingRect().left + obj.getBoundingRect().width > obj.canvas.width
-        ) {
-          obj.top = Math.min(
-            obj.top,
-            obj.canvas.height - obj.getBoundingRect().height + obj.top - obj.getBoundingRect().top
-          );
-          obj.left = Math.min(
-            obj.left,
-            obj.canvas.width - obj.getBoundingRect().width + obj.left - obj.getBoundingRect().left
-          );
+
+        if (obj.left > 0 || objectWidth * obj.scaleX === canvasWidth) {
+          obj.left = 0;
+        }
+
+        if (Math.abs(obj.left) > Math.abs(canvasWidth - objectWidth * obj.scaleX)) {
+          obj.left = canvasWidth - objectWidth * obj.scaleX;
         }
       });
     }

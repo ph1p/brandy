@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import fs from 'fs';
 import MenuBuilder from './menu';
 import Jimp from 'jimp';
 const winURL =
@@ -35,30 +36,62 @@ const createWindow = () => {
   // compress image and send it the render process
   ipcMain.on('compress-image', (event, data) => {
     const win = event.sender.getOwnerBrowserWindow().webContents;
-    let givenImage = data.image;
+    let ext = 'jpg'
+    let {
+      type,
+      data: givenImage,
+      name,
+      savePath
+    } = data;
 
-    if (data.isBase64) {
-      givenImage = Buffer.from(data.image, 'base64');
+    if (givenImage.indexOf(';base64,') >= 0) {
+      givenImage = Buffer.from(givenImage.replace(/^data:image\/png;base64,/, ''), 'base64');
+    } else {
+
+      if (typeof type === 'undefined') {
+        ext = /^.+\.([^.]+)$/.exec(givenImage)[1];
+
+        switch (ext) {
+          case 'svg':
+            type = 'svg';
+            break;
+          case 'png':
+          case 'jpg':
+          case 'jpeg':
+            type = 'buffer';
+            break;
+        }
+      }
     }
 
-    Jimp.read(givenImage)
-      .then(image => {
-        if (data.isBackground) {
-          image
-            .quality(95)
-            .resize(Jimp.AUTO, 1200)
-            .getBuffer(Jimp.MIME_JPEG, (err, img) => {
-              win.send('compressed-background-image', img);
-            });
-        } else {
-          image.quality(95).write(data.savePath);
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+      Jimp.read(givenImage)
+        .then(image => {
+          if (type === 'buffer') {
+            image
+              .quality(95)
+              .resize(Jimp.AUTO, 1200)
+              .getBuffer(Jimp.MIME_JPEG, (err, img) => {
+                win.send(`compressed-image-${name}`, img);
+              });
+          } else if (type === 'path') {
+            image.quality(95).write(savePath);
 
-          win.send('compressed-image', data.savePath);
-        }
-      })
-      .catch(err => {
-        win.send('error', true);
-      });
+            win.send(`compressed-image-${name}`, savePath);
+          }
+        })
+        .catch(err => {
+          win.send('error', true);
+        });
+    } else {
+      if (type === 'svg') {
+        fs.readFile(givenImage, 'utf8', (err, file) => {
+          if (!err) {
+            win.send(`compressed-image-${name}`, file);
+          }
+        });
+      }
+    }
   });
 };
 
