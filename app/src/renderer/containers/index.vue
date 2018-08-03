@@ -174,8 +174,8 @@ export default {
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        if (img.width > img.height && height >= width) {
-          scaleFactor = height / img.height;
+        if ((img.width > img.height && height >= width) || height >= width) {
+					scaleFactor = height / img.height;
         }
 
         img.set({
@@ -183,10 +183,6 @@ export default {
           scaleX: scaleFactor,
           left: 0,
           top: 0
-          // left: width / 2,
-          // top: height / 2,
-          // originX: 'center',
-          // originY: 'center'
         });
 
         this.setLogoSettings();
@@ -210,8 +206,8 @@ export default {
           let svg = fabric.util.groupSVGElements(logoImg, options);
           svg.set({
             name: 'logo',
-            hasControls: false,
-            selectable: false
+            hasControls: true,
+            selectable: true
           });
 
           canvas.add(svg);
