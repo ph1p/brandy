@@ -26,7 +26,7 @@ export const presets = [
       height: 1350
     },
     font: {
-      fontSize: 120
+      size: 120
     }
   },
   {
@@ -41,7 +41,7 @@ export const presets = [
       height: 500
     },
     font: {
-      fontSize: 80
+      size: 80
     }
   },
   {
@@ -56,7 +56,7 @@ export const presets = [
       height: 1200
     },
     font: {
-      fontSize: 130
+      size: 130
     }
   },
   {
@@ -71,7 +71,7 @@ export const presets = [
       height: 675
     },
     font: {
-      fontSize: 110
+      size: 110
     }
   },
   {
@@ -86,7 +86,7 @@ export const presets = [
       height: 320
     },
     font: {
-      fontSize: 60
+      size: 60
     }
   },
   {
@@ -101,7 +101,7 @@ export const presets = [
       height: 628
     },
     font: {
-      fontSize: 110
+      size: 110
     }
   },
   {
@@ -116,7 +116,7 @@ export const presets = [
       height: 1080
     },
     font: {
-      fontSize: 120
+      size: 120
     }
   }
 ];

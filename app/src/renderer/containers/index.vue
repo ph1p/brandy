@@ -29,6 +29,21 @@ let canvas = null;
 
 fabric.isWebglSupported(fabric.textureSize);
 
+// https://github.com/fabricjs/fabric.js/issues/4347
+fabric.IText.prototype.set({
+  _getNonTransformedDimensions() {
+    // Object dimensions
+    return new fabric.Point(
+      this.width + (this.paddingX || this.padding),
+      this.height + (this.paddingY || this.padding)
+    );
+  },
+  _calculateCurrentDimensions() {
+    // Controls dimensions
+    return fabric.util.transformPoint(this._getTransformedDimensions(), this.getViewportTransform(), true);
+  }
+});
+
 fabric.Canvas.prototype.getItemByName = function(name) {
   var object = null,
     objects = this.getObjects();
@@ -45,12 +60,6 @@ fabric.Canvas.prototype.getItemByName = function(name) {
 
 export default {
   name: 'main-page',
-  data() {
-    return {
-      filter: {},
-      texts: {}
-    };
-  },
   components: {
     Sidebar,
     Loader
@@ -187,7 +196,7 @@ export default {
     },
     setLogoImage() {
       // ipcRenderer.send('compress-image', {
-      //   data: '/Users/phlp/Downloads/brandy/app/dist/imgs/logo.svg',
+      //   data: 'path',
       //   name: 'logo'
       // });
       const logoElement = canvas.getItemByName('logo');
@@ -199,7 +208,11 @@ export default {
       if (this.currentLogo) {
         fabric.loadSVGFromString(this.currentLogo.data, (logoImg, options) => {
           let svg = fabric.util.groupSVGElements(logoImg, options);
-          svg.set('name', 'logo');
+          svg.set({
+            name: 'logo',
+            hasControls: false,
+            selectable: false
+          });
 
           canvas.add(svg);
 
@@ -285,108 +298,74 @@ export default {
       }
     },
     setTexts() {
-      let title;
-      let subtitle;
-      let subtitleFound = false;
-      let titleFound = false;
+      let textObject = canvas.getItemByName('text');
 
-      const titleObj = canvas.getItemByName('title');
-      const subtitleObj = canvas.getItemByName('subtitle');
+      const title = this.text.title;
+      const subTitle = this.text.subtitle;
 
-      if (titleObj) {
-        if (this.texts.title === '') {
-          canvas.remove(titleObj);
-        } else {
-          title = titleObj;
-          titleFound = true;
-        }
-      }
-
-      if (subtitleObj) {
-        if (this.texts.subtitle === '') {
-          canvas.remove(subtitleObj);
-        } else {
-          subtitle = subtitleObj;
-          subtitleFound = true;
-        }
-      }
-
-      if (this.texts.title !== '') {
-        if (!titleFound) {
-          title = new fabric.Text('', {
-            fontFamily: 'Varela Round',
-            fontSize: 120,
-            fontWeight: 900,
-            fill: '#fff',
-            textAlign: 'center',
-            hasControls: false,
-            selectable: false,
-            hoverCursor: 'normal'
-          });
-          title.set('name', 'title');
-
-          canvas.add(title);
-        }
-
-        title.set({
-          text: this.texts.title,
-          fontSize: this.texts.fontSize
+      if (!textObject) {
+        const textObj = new fabric.IText(`${title}\n${subTitle}`, {
+          name: 'text',
+          fontFamily: 'Varela Round',
+          targetFindTolerance: 0,
+          left: 0,
+          top: 0,
+          fontSize: this.font.size,
+          padding: 50,
+          lineHeight: 1,
+          fill: this.font.color,
+          textAlign: 'center',
+          hasControls: false,
+          selectable: false,
+          hoverCursor: 'normal',
+          editable: false,
+          styles: {
+            1: Array.from(subTitle).reduce((before, current, index) => {
+              return {
+                ...before,
+                [index]: {
+                  fontSize: this.font.size / 2
+                }
+              };
+            }, {})
+          }
         });
 
-        let directionTitle = this.measurements.width / 2 - title.width / 2;
-        switch (this.text.align) {
-          case 'right':
-            directionTitle = this.measurements.width - title.width - 50;
-            break;
-          case 'left':
-            directionTitle = 50;
-            break;
-        }
+        textObject = textObj;
+        canvas.add(textObj);
 
-        title.set({
-          left: directionTitle,
-          textAlign: this.text.align,
-          top: this.measurements.height / 2 - title.height / 2
+        textObj.setCoords();
+      } else {
+        textObject.set({
+					fontSize: this.font.size,
+          text: `${title}\n${subTitle}`,
+          styles: {
+            1: Array.from(subTitle).reduce((before, current, index) => {
+              return {
+                ...before,
+                [index]: {
+                  fontSize: this.font.size / 2
+                }
+              };
+            }, {})
+          }
         });
       }
 
-      if (this.texts.subtitle !== '') {
-        if (!subtitleFound) {
-          subtitle = new fabric.Text('', {
-            fontFamily: 'Varela Round',
-            fontSize: 120 / 2,
-            fontWeight: 100,
-            fill: '#fff',
-            textAlign: 'center',
-            hasControls: false,
-            selectable: false,
-            hoverCursor: 'normal'
-          });
-          subtitle.set('name', 'subtitle');
-          canvas.add(subtitle);
-        }
-
-        subtitle.set({
-          text: this.texts.subtitle,
-          fontSize: this.texts.fontSize / 2
-        });
-
-        let directionSubtitle = this.measurements.width / 2 - subtitle.width / 2;
-        switch (this.text.align) {
-          case 'right':
-            directionSubtitle = this.measurements.width - subtitle.width - 55;
-            break;
-          case 'left':
-            directionSubtitle = 55;
-            break;
-        }
-
-        subtitle.set({
-          left: directionSubtitle,
-          textAlign: this.text.align,
-          top: this.measurements.height / 2 - subtitle.height / 2 + ((title ? title.height : 0) - subtitle.height / 2)
-        });
+      switch (this.text.align) {
+        case 'right':
+          textObject.left = canvas.width - textObject.width - textObject.padding;
+          break;
+        case 'left':
+          textObject.left = 0;
+          break;
+        case 'center':
+          textObject.center();
+          break;
       }
+      textObject.centerV();
+
+      textObject.textAlign = this.text.align;
 
       canvas.renderAll();
     },
@@ -407,12 +386,8 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.scaleStage);
-    this.$off('changeTexts');
-    this.$off('changeLogo');
-    this.$off('changeBackground');
   },
   watch: {
-    texts: 'setTexts',
     filterBlur: 'setFilters',
     currentLogo: {
       deep: true,
@@ -449,6 +424,12 @@ export default {
         this.setTexts();
       }
     },
+    font: {
+      deep: true,
+      handler() {
+        this.setTexts();
+      }
+    },
     measurements: {
       deep: true,
       handler() {
@@ -467,6 +448,7 @@ export default {
         this.scaleStage();
         this.setLogoImage();
         this.setLogoSettings();
+        this.setTexts();
       }
     }
   },
@@ -503,12 +485,12 @@ export default {
         canvas.sendToBack(newImage);
 
         this.setMeasurements();
-        this.scaleStage();
         this.setTexts();
         this.setFilters();
         this.setLogoImage();
         this.setLogoSettings();
-        this.setImageStroke();
+				this.setImageStroke();
+				this.scaleStage();
 
         canvas.renderAll();
 
@@ -533,7 +515,7 @@ export default {
       canvas.setWidth(canvas.height);
       canvas.hasBorders = false;
 
-      canvas.on('object:moving', (e) => {
+      canvas.on('object:moving', e => {
         var obj = e.target;
 
         let { height: objectHeight, width: objectWidth } = obj;
@@ -544,7 +526,7 @@ export default {
         }
 
         if (Math.abs(obj.top) > Math.abs(canvasHeight - objectHeight * obj.scaleY)) {
-          obj.top = canvasHeight - (objectHeight * obj.scaleY);
+          obj.top = canvasHeight - objectHeight * obj.scaleY;
         }
 
         if (obj.left > 0 || objectWidth * obj.scaleX === canvasWidth) {

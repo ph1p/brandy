@@ -108,10 +108,10 @@
 								<li @click="textAlign = 'center';" :class="{active: textAlign === 'center'}"><img src="~renderer/assets/img/icons/text_mid.svg"></li>
 								<li @click="textAlign = 'right';" :class="{active: textAlign === 'right'}"><img src="~renderer/assets/img/icons/text.svg"></li>
 							</ul>
-							<input type="text" v-model="title" placeholder="Titel">
+							<input type="text" v-model="textTitle" placeholder="Titel">
 						</div>
 						<div class="texts__subtitle">
-							<input type="text" v-model="subtitle" placeholder="Subtitel">
+							<input type="text" v-model="textSubTitle" placeholder="Subtitel">
 						</div>
 					</div>
 				</div>
@@ -151,8 +151,6 @@ export default {
       areFiltersOpen: false,
       areFontsOpen: false,
       areStrokeOptionsOpen: false,
-      title: '',
-      subtitle: '',
       activePreset: 0,
       selectedFilterPreset: null,
       presets
@@ -215,6 +213,26 @@ export default {
         });
       }
     },
+    textTitle: {
+      get() {
+        return this.text.title;
+      },
+      set(value) {
+        this.setText({
+          title: value
+        });
+      }
+    },
+    textSubTitle: {
+      get() {
+        return this.text.subtitle;
+      },
+      set(value) {
+        this.setText({
+          subtitle: value
+        });
+      }
+    },
     textAlign: {
       get() {
         return this.text.align;
@@ -239,7 +257,6 @@ export default {
       return {
         title: this.title,
         subtitle: this.subtitle,
-        fontSize: this.preset.font.size,
         width: this.preset.measurements.width,
         height: this.preset.measurements.height
       };
@@ -320,7 +337,6 @@ export default {
   },
   mounted() {
     this.$parent.$on('loaded', () => {
-      this.$parent.$emit('changeLogo', this.logoProperties);
       this.$parent.$emit('changeTexts', this.textProperties);
     });
 
@@ -617,10 +633,6 @@ export default {
       &:hover {
         background-color: lighten($mainColor, 58%);
       }
-    }
-    .open-image {
-    }
-    .export-image {
     }
   }
 }
