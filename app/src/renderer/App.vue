@@ -17,7 +17,6 @@
 import { remote, ipcRenderer } from 'electron';
 
 import { addClass, removeClass, mainDir } from 'renderer/utils';
-import store from 'renderer/vuex/store';
 
 import { exec } from 'child_process';
 
@@ -35,7 +34,6 @@ ipcRenderer.on('is-window-blurred', () => {
 });
 
 export default {
-  store,
   methods: {
     closeApp() {
       win.close();
@@ -186,38 +184,5 @@ body {
       }
     }
   }
-}
-
-input[type='range'] {
-  -webkit-appearance: none;
-  width: 100%;
-  margin: 6px 0;
-}
-input[type='range']:focus {
-  outline: none;
-}
-input[type='range']::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 4px;
-  cursor: pointer;
-  box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
-  background: #c7c7c7;
-  border-radius: 0px;
-  border: 0px solid #000000;
-  border-radius: 5px;
-}
-input[type='range']::-webkit-slider-thumb {
-  box-shadow: 0px 0px 0px rgba(0, 0, 62, 0), 0px 0px 0px rgba(0, 0, 88, 0);
-  border: 0px solid rgba(0, 30, 0, 0);
-  height: 16px;
-  width: 16px;
-  border-radius: 50px;
-  background: #999999;
-  cursor: pointer;
-  -webkit-appearance: none;
-  margin-top: -6px;
-}
-input[type='range']:focus::-webkit-slider-runnable-track {
-  background: #c7c7c7;
 }
 </style>
