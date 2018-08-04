@@ -1,30 +1,50 @@
 <template>
 	<div class="main-container">
-		<Loader :isLoading="loading" :text="'Load Image...'" />
+		<Loader :isLoading="isLoading" :text="'Load Image...'" />
 
-		<Sidebar v-if="background"></Sidebar>
+		<Sidebar v-if="backgroundPath"></Sidebar>
 
-		<div class="content" ref="contentElement" :style="{gridColumn: background ? '' : '1/-1'}">
-			<div class="" v-if="!background">drag image</div>
+		<div class="content" ref="contentElement" :style="{gridColumn: backgroundPath ? '' : '1/-1'}">
+			<div class="" v-if="!backgroundPath">drag image</div>
 
-			<div class="stage" ref="stageElement" v-show="background">
-				<div class="stage-info" v-if="preset !== null && !loading">
-					<span class="stage-info-title">{{preset.title}}</span>
+			<div class="stage" ref="stageElement" v-show="backgroundPath">
+				<div class="stage-info" v-if="preset !== null && !isLoading">
+					<span class="stage-info-title">{{preset.info.title}}</span>
 					<span class="stage-info-measurements">{{measurements.width}}px x {{measurements.height}}px</span>
 				</div>
-				<canvas v-show="!loading" id="canvas" ref="canvasElement"></canvas>
+				<canvas v-show="!isLoading" id="canvas" ref="canvasElement"></canvas>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex';
 import { ipcRenderer } from 'electron';
+import FontFaceObserver from 'fontfaceobserver';
 import { fabric } from 'fabric';
 import Sidebar from './Sidebar';
 import Loader from '../components/Loader';
 
+let canvas = null;
+
 fabric.isWebglSupported(fabric.textureSize);
+fabric.filterBackend = new fabric.WebglFilterBackend();
+
+// https://github.com/fabricjs/fabric.js/issues/4347
+fabric.IText.prototype.set({
+  _getNonTransformedDimensions() {
+    // Object dimensions
+    return new fabric.Point(
+      this.width + (this.paddingX || this.padding),
+      this.height + (this.paddingY || this.padding)
+    );
+  },
+  _calculateCurrentDimensions() {
+    // Controls dimensions
+    return fabric.util.transformPoint(this._getTransformedDimensions(), this.getViewportTransform(), true);
+  }
+});
 
 fabric.Canvas.prototype.getItemByName = function(name) {
   var object = null,
@@ -40,44 +60,40 @@ fabric.Canvas.prototype.getItemByName = function(name) {
   return object;
 };
 
-import logo from '../assets/img/logo.svg';
-import logo2 from '../assets/img/logo2.svg';
-
-import logoBlack from '../assets/img/logo_black.svg';
-import logo2Black from '../assets/img/logo2_black.svg';
-
 export default {
   name: 'main-page',
-  data() {
-    return {
-      stroke: {},
-      settings: {},
-      loading: false,
-      canvas: null,
-      filter: {},
-      texts: {},
-      logo: {},
-      measurements: {},
-      preset: {},
-      background: ''
-    };
-  },
   components: {
     Sidebar,
     Loader
   },
+  computed: {
+    ...mapGetters('canvas', [
+      'isLoading',
+      'filters',
+      'stroke',
+      'font',
+      'text',
+      'measurements',
+      'preset',
+      'logo',
+      'backgroundPath',
+      'filterBlur',
+      'currentLogo'
+    ])
+  },
   methods: {
+    ...mapActions('canvas', ['stopLoading', 'startLoading', 'setBackgroundPath']),
     setImageStroke() {
-      const leftStrokeCanvas = this.canvas.getItemByName('leftStroke');
-      const topStrokeCanvas = this.canvas.getItemByName('topStroke');
-      const rightStrokeCanvas = this.canvas.getItemByName('rightStroke');
-      const bottomStrokeCanvas = this.canvas.getItemByName('bottomStroke');
+      const leftStrokeCanvas = canvas.getItemByName('leftStroke');
+      const topStrokeCanvas = canvas.getItemByName('topStroke');
+      const rightStrokeCanvas = canvas.getItemByName('rightStroke');
+      const bottomStrokeCanvas = canvas.getItemByName('bottomStroke');
 
       const strokeWidth = this.stroke.width || 0;
       const strokeColor = this.stroke.color || '#ffffff';
 
-      const height = this.canvas.getHeight();
-			const width = this.canvas.getWidth();
+      const height = canvas.getHeight();
+      const width = canvas.getWidth();
 
       const lines = [
         {
@@ -132,10 +148,10 @@ export default {
         rightStroke.set('name', 'rightStroke');
         bottomStroke.set('name', 'bottomStroke');
 
-        this.canvas.add(leftStroke);
-        this.canvas.add(topStroke);
-        this.canvas.add(rightStroke);
-        this.canvas.add(bottomStroke);
+        canvas.add(leftStroke);
+        canvas.add(topStroke);
+        canvas.add(rightStroke);
+        canvas.add(bottomStroke);
       } else {
         leftStrokeCanvas.set(lines[0]);
         topStrokeCanvas.set(lines[1]);
@@ -143,115 +159,128 @@ export default {
         bottomStrokeCanvas.set(lines[3]);
       }
 
-      this.canvas.bringToFront(leftStrokeCanvas);
-      this.canvas.bringToFront(topStrokeCanvas);
-      this.canvas.bringToFront(rightStrokeCanvas);
-      this.canvas.bringToFront(bottomStrokeCanvas);
+      canvas.bringToFront(leftStrokeCanvas);
+      canvas.bringToFront(topStrokeCanvas);
+      canvas.bringToFront(rightStrokeCanvas);
+      canvas.bringToFront(bottomStrokeCanvas);
 
-      this.canvas.renderAll();
+      canvas.renderAll();
     },
     setMeasurements() {
-      console.log('setMeasurements');
-      const img = this.canvas.getItemByName('backgroundImage');
+      const img = canvas.getItemByName('backgroundImage');
 
       if (img) {
         const { width, height } = this.measurements;
         let scaleFactor = width / img.width;
 
-        this.canvas.setWidth(width);
-        this.canvas.setHeight(height);
+        canvas.setWidth(width);
+        canvas.setHeight(height);
 
-        if (img.width > img.height && height >= width) {
+        if ((img.width > img.height && height >= width) || height >= width) {
           scaleFactor = height / img.height;
         }
 
         img.set({
           scaleY: scaleFactor,
           scaleX: scaleFactor,
-          left: width / 2,
-          top: height / 2,
-          originX: 'center',
-          originY: 'center'
+          left: 0,
+          top: 0
         });
 
-        this.canvas.renderAll();
+        this.setLogoSettings();
+
+        canvas.renderAll();
       }
     },
-    setLogo() {
-      let image;
+    setLogoImage() {
+      // ipcRenderer.send('compress-image', {
+      //   data: 'path',
+      //   name: 'logo'
+      // });
+      const logoElement = canvas.getItemByName('logo');
+
+      if (logoElement) {
+        canvas.remove(logoElement);
+      }
+
+      if (this.currentLogo) {
+        fabric.loadSVGFromString(this.currentLogo.data, (logoImg, options) => {
+          let svg = fabric.util.groupSVGElements(logoImg, options);
+          svg.set({
+            name: 'logo',
+            hasControls: true,
+            selectable: true
+          });
+
+          canvas.add(svg);
+
+          this.setLogoSettings();
+        });
+      }
+    },
+    setLogoSettings() {
       let logoSize;
 
-      switch (this.logo.brand) {
-        case 'b1w':
-          image = logo;
-          logoSize = this.logo.logoSize;
+      switch (this.logo.current) {
+        case 'logo_appcom1':
+          logoSize = this.preset.info.logo;
           break;
-        case 'b2w':
-          image = logo2;
-          logoSize = this.logo.logo2Size;
-          break;
-        case 'b1b':
-          image = logoBlack;
-          logoSize = this.logo.logoSize;
-          break;
-        case 'b2b':
-          image = logo2Black;
-          logoSize = this.logo.logo2Size;
+        case 'logo_appcom2':
+          logoSize = this.preset.info.logo2;
           break;
       }
-      const logoElement = this.canvas.getItemByName('logo');
 
-      fabric.loadSVGFromURL(image, (logoImg, options) => {
-        const svg = fabric.util.groupSVGElements(logoImg, options);
+      const svg = canvas.getItemByName('logo');
 
-        this.canvas.remove(this.canvas.getItemByName('logo'));
-
-        svg.set('name', 'logo');
-
+      if (svg && this.logo) {
         svg.scaleToWidth(logoSize);
 
-        this.canvas.add(svg);
+        let top = canvas.getHeight() - svg.height * svg.scaleY - 40;
+        let left = canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
 
-        svg.top = this.canvas.getHeight() - svg.height * svg.scaleY - 40;
-        svg.left = this.canvas.getWidth() / 2 - svg.width * svg.scaleX / 2;
-
-        switch (this.logo.brandDirectionHorizontal) {
+        switch (this.logo.directionH) {
           case 'right':
-            svg.left = this.canvas.getWidth() - svg.width * svg.scaleX - 50;
+            left = canvas.getWidth() - svg.width * svg.scaleX - 50;
             break;
           case 'left':
-            svg.left = 50;
+            left = 50;
             break;
         }
 
-        switch (this.logo.brandDirectionVertical) {
+        switch (this.logo.directionV) {
           case 'top':
-            svg.top = 50;
+            top = 50;
             break;
           case 'center':
-            svg.top = this.canvas.getHeight() / 2 - svg.height * svg.scaleY / 2;
+            top = canvas.getHeight() / 2 - svg.height * svg.scaleY / 2;
             break;
         }
 
-        this.loading = false;
+        svg.set({
+          fill: this.logo.color,
+          left,
+          top
+        });
 
-        this.canvas.renderAll();
-      });
+        this.stopLoading();
+
+        canvas.renderAll();
+      }
     },
     setFilters() {
       const f = fabric.Image.filters;
-      const img = this.canvas.getItemByName('backgroundImage');
+      const img = canvas.getItemByName('backgroundImage');
       img.filters = [];
-      if (this.filter) {
-        if (this.filter.blur) {
-          const blur = new fabric.Image.filters.Blur({
-            blur: parseFloat(this.filter.blur)
-          });
-          img.filters.push(blur);
-        }
+      if (this.filterBlur) {
+        const blur = new fabric.Image.filters.Blur({
+          blur: this.filterBlur
+        });
+        img.filters.push(blur);
+      }
 
-        if (this.filter.filters && this.filter.filters.length > 0) {
-          this.filter.filters.forEach(({ mode, opacity, color }) => {
+      if (this.filters) {
+        if (this.filters && this.filters.length > 0) {
+          this.filters.forEach(({ mode, opacity, color }) => {
             const filter = new fabric.Image.filters.BlendColor({
               color: color,
               alpha: parseFloat(opacity),
@@ -263,122 +292,76 @@ export default {
 
         img.applyFilters(img.filters);
 
-        this.canvas.renderAll();
+        canvas.renderAll();
       }
     },
     setTexts() {
-      let title;
-      let subtitle;
-      let subtitleFound = false;
-      let titleFound = false;
+      let textObject = canvas.getItemByName('text');
 
-      const titleObj = this.canvas.getItemByName('title');
-      const subtitleObj = this.canvas.getItemByName('subtitle');
+      const title = this.text.title;
+      const subTitle = this.text.subtitle;
 
-      if (titleObj) {
-        if (this.texts.title === '') {
-          this.canvas.remove(titleObj);
-        } else {
-          title = titleObj;
-          titleFound = true;
-        }
-      }
-
-      if (subtitleObj) {
-        if (this.texts.subtitle === '') {
-          this.canvas.remove(subtitleObj);
-        } else {
-          subtitle = subtitleObj;
-          subtitleFound = true;
-        }
-      }
-
-      if (this.texts.title !== '') {
-        if (!titleFound) {
-          title = new fabric.Text('', {
-            fontFamily: 'Varela Round',
-            fontSize: 120,
-            fontWeight: 900,
-            fill: '#fff',
-            textAlign: 'center',
-            hasControls: false,
-            selectable: false,
-            hoverCursor: 'normal'
-          });
-          title.set('name', 'title');
-
-          this.canvas.add(title);
-        }
-
-        title.set({
-          text: this.texts.title,
-          fontSize: this.texts.fontSize
+      if (!textObject) {
+        const textObj = new fabric.IText(`${title}\n${subTitle}`, {
+          name: 'text',
+          left: 0,
+          top: 0,
+          hasControls: false,
+          selectable: false,
+          hoverCursor: 'normal',
+          editable: false
         });
 
-        let directionTitle = this.measurements.width / 2 - title.width / 2;
-        switch (this.texts.textAlign) {
-          case 'right':
-            directionTitle = this.measurements.width - title.width - 50;
-            break;
-          case 'left':
-            directionTitle = 50;
-            break;
-        }
-
-        title.set({
-          left: directionTitle,
-          textAlign: this.texts.textAlign,
-          top: this.measurements.height / 2 - title.height / 2
-        });
+        textObject = textObj;
+        canvas.add(textObj);
       }
 
-      if (this.texts.subtitle !== '') {
-        if (!subtitleFound) {
-          subtitle = new fabric.Text('', {
-            fontFamily: 'Varela Round',
-            fontSize: 120 / 2,
-            fontWeight: 100,
-            fill: '#fff',
-            textAlign: 'center',
-            hasControls: false,
-            selectable: false,
-            hoverCursor: 'normal'
-          });
-          subtitle.set('name', 'subtitle');
-          this.canvas.add(subtitle);
+      textObject.set('fontFamily', 'Varela Round');
+
+      textObject.setCoords();
+
+      textObject.set({
+        targetFindTolerance: 0,
+        lineHeight: 1,
+        fontSize: this.font.size,
+        fill: this.font.color,
+        text: `${title}\n${subTitle}`,
+        padding: 50,
+        textAlign: this.text.align,
+        styles: {
+          1: Array.from(subTitle).reduce((before, current, index) => {
+            return {
+              ...before,
+              [index]: {
+                fontSize: this.font.size / 2
+              }
+            };
+          }, {})
         }
+      });
 
-        subtitle.set({
-          text: this.texts.subtitle,
-          fontSize: this.texts.fontSize / 2
-        });
-
-        let directionSubtitle = this.measurements.width / 2 - subtitle.width / 2;
-        switch (this.texts.textAlign) {
-          case 'right':
-            directionSubtitle = this.measurements.width - subtitle.width - 55;
-            break;
-          case 'left':
-            directionSubtitle = 55;
-            break;
-        }
-
-        subtitle.set({
-          left: directionSubtitle,
-          textAlign: this.texts.textAlign,
-          top: this.measurements.height / 2 - subtitle.height / 2 + ((title ? title.height : 0) - subtitle.height / 2)
-        });
+      switch (this.text.align) {
+        case 'right':
+          textObject.left = canvas.width - textObject.width - textObject.padding;
+          break;
+        case 'left':
+          textObject.left = 0;
+          break;
+        case 'center':
+          textObject.center();
+          break;
       }
 
-      this.canvas.renderAll();
+      textObject.centerV();
+      canvas.requestRenderAll();
     },
     scaleStage() {
       const contentElement = this.$refs.contentElement;
 
       if (typeof contentElement !== 'undefined') {
         const scale = Math.min(
-          (contentElement.offsetWidth - 100) / this.canvas.getWidth(),
-          (contentElement.offsetHeight - 180) / this.canvas.getHeight()
+          (contentElement.offsetWidth - 50) / canvas.getWidth(),
+          (contentElement.offsetHeight - 180) / canvas.getHeight()
         );
 
         if (scale <= 1) {
@@ -389,130 +372,158 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.scaleStage);
-    this.$off('changeFilter');
-    this.$off('changeTexts');
-    this.$off('changeLogo');
-    this.$off('changeMeasurements');
-    this.$off('changePreset');
-    this.$off('changeBackground');
-    this.$off('changeStroke');
   },
   watch: {
-    texts: 'setTexts',
-    logo: 'setLogo',
-    filter: 'setFilters',
-    stroke: 'setImageStroke',
-    measurements: 'setMeasurements'
+    filterBlur: 'setFilters',
+    currentLogo: {
+      deep: true,
+      handler() {
+        this.setLogoImage();
+      }
+    },
+    filters: {
+      deep: true,
+      handler() {
+        this.setFilters();
+      }
+    },
+    backgroundPath(path) {
+      if (path !== '') {
+        canvas.clear();
+        this.startLoading();
+        ipcRenderer.send('compress-image', {
+          data: path,
+          name: 'background',
+          type: 'buffer'
+        });
+      }
+    },
+    stroke: {
+      deep: true,
+      handler() {
+        this.setImageStroke();
+      }
+    },
+    text: {
+      deep: true,
+      handler() {
+        this.setTexts();
+      }
+    },
+    font: {
+      deep: true,
+      handler() {
+        this.setTexts();
+      }
+    },
+    measurements: {
+      deep: true,
+      handler() {
+        this.setMeasurements();
+      }
+    },
+    logo: {
+      deep: true,
+      handler(v) {
+        this.setLogoSettings();
+      }
+    },
+    preset: {
+      deep: true,
+      handler() {
+        this.scaleStage();
+        this.setLogoImage();
+        this.setLogoSettings();
+        this.setTexts();
+      }
+    }
   },
   created() {
-    ipcRenderer.on('compressed-background-image', (event, image) => {
+    this.setBackgroundPath('');
+
+    ipcRenderer.on('compressed-image-logo', data => {
+      console.log(data);
+    });
+
+    ipcRenderer.on('compressed-image-background', (event, image) => {
       const blob = new Blob([image], {
         type: 'image/jpeg'
       });
       const objectURL = URL.createObjectURL(blob);
 
       fabric.Image.fromURL(objectURL, newImage => {
-        const backgroundImage = this.canvas.getItemByName('backgroundImage');
+        const backgroundImage = canvas.getItemByName('backgroundImage');
 
         if (backgroundImage) {
-          this.canvas.fxRemove(backgroundImage);
+          canvas.fxRemove(backgroundImage);
         }
 
         newImage.set('name', 'backgroundImage');
 
-        this.canvas.setWidth(this.canvas.width);
-        this.canvas.setHeight(this.canvas.width);
+        canvas.setWidth(canvas.width);
+        canvas.setHeight(canvas.width);
 
         newImage.set({
           hasControls: false
         });
 
-        this.canvas.add(newImage);
-        this.canvas.sendToBack(newImage);
+        canvas.add(newImage);
+        canvas.sendToBack(newImage);
 
         this.setMeasurements();
+        this.setFilters();
+        this.setLogoImage();
+        this.setLogoSettings();
+        this.setImageStroke();
         this.scaleStage();
         this.setTexts();
-        this.setFilters();
-        this.setLogo();
-        this.setImageStroke();
 
-        this.canvas.renderAll();
+        canvas.renderAll();
 
-        this.loading = false;
+        this.stopLoading();
       });
     });
   },
   mounted() {
-    fabric.filterBackend = new fabric.WebglFilterBackend();
+    const font = new FontFaceObserver('Varela Round');
+    font.load().then(() => {
+      if (!canvas) {
+        canvas = new fabric.Canvas(this.$refs.canvasElement, {
+          controlsAboveOverlay: true,
+          preserveObjectStacking: true,
+          enableRetinaScaling: true,
+          renderOnAddRemove: true
+        });
+        window.can = canvas;
 
-    if (!this.canvas) {
-      this.canvas = new fabric.Canvas(this.$refs.canvasElement, {
-        controlsAboveOverlay: true,
-        preserveObjectStacking: true,
+        canvas.selection = false;
+        canvas.setHeight(canvas.width);
+        canvas.setWidth(canvas.height);
+        canvas.hasBorders = false;
 
-        perPixelTargetFind: true,
-        enableRetinaScaling: true,
-        renderOnAddRemove: true
-      });
-      window.can = this.canvas;
+        canvas.on('object:moving', e => {
+          var obj = e.target;
 
-      this.canvas.selection = false;
-      this.canvas.setHeight(canvas.width);
-      this.canvas.setWidth(canvas.height);
-      this.canvas.hasBorders = false;
+          let { height: objectHeight, width: objectWidth } = obj;
+          let { width: canvasWidth, height: canvasHeight } = obj.canvas;
 
-      this.canvas.on('object:moving', function(e) {
-        var obj = e.target;
-        // if object is too big ignore
-        if (obj.currentHeight > obj.canvas.height || obj.currentWidth > obj.canvas.width) {
-          return;
-        }
-        obj.setCoords();
-        // top-left  corner
-        if (obj.getBoundingRect().top < 0 || obj.getBoundingRect().left < 0) {
-          obj.top = Math.max(obj.top, obj.top - obj.getBoundingRect().top);
-          obj.left = Math.max(obj.left, obj.left - obj.getBoundingRect().left);
-        }
-        // bot-right corner
-        if (
-          obj.getBoundingRect().top + obj.getBoundingRect().height > obj.canvas.height ||
-          obj.getBoundingRect().left + obj.getBoundingRect().width > obj.canvas.width
-        ) {
-          obj.top = Math.min(
-            obj.top,
-            obj.canvas.height - obj.getBoundingRect().height + obj.top - obj.getBoundingRect().top
-          );
-          obj.left = Math.min(
-            obj.left,
-            obj.canvas.width - obj.getBoundingRect().width + obj.left - obj.getBoundingRect().left
-          );
-        }
-      });
-    }
+          if (obj.top > 0) {
+            obj.top = 0;
+          }
 
-    this.$on('changeFilter', opt => {
-      this.filter = opt;
-    });
+          if (Math.abs(obj.top) > Math.abs(canvasHeight - objectHeight * obj.scaleY)) {
+            obj.top = canvasHeight - objectHeight * obj.scaleY;
+          }
 
-    this.$on('changeTexts', opt => {
-      this.texts = opt;
-    });
+          if (obj.left > 0 || objectWidth * obj.scaleX === canvasWidth) {
+            obj.left = 0;
+          }
 
-    this.$on('changeLogo', opt => {
-      this.logo = opt;
-    });
-
-    this.$on('changeMeasurements', opt => {
-      this.measurements = opt;
-    });
-
-    this.$on('changePreset', preset => {
-      this.preset = preset;
-    });
-
-    this.$on('changeStroke', stroke => {
-      this.stroke = stroke;
+          if (Math.abs(obj.left) > Math.abs(canvasWidth - objectWidth * obj.scaleX)) {
+            obj.left = canvasWidth - objectWidth * obj.scaleX;
+          }
+        });
+      }
     });
 
     // SCALE
@@ -528,7 +539,7 @@ export default {
     };
 
     document.ondragend = () => {
-      this.loading = true;
+      this.startLoading();
       return false;
     };
 
@@ -536,24 +547,7 @@ export default {
       e.preventDefault();
       e.stopPropagation();
 
-      this.background = e.dataTransfer.files[0].path;
-			this.loading = true;
-
-			this.canvas.clear();
-
-      ipcRenderer.send('compress-image', {
-        image: this.background,
-        isBackground: true
-      });
-
-      WebFont.load({
-        google: {
-          families: ['Varela Round']
-        },
-        active: () => {
-          this.$emit('loaded');
-        }
-      });
+      this.setBackgroundPath(e.dataTransfer.files[0].path);
     };
   }
 };

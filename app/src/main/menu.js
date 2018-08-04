@@ -1,6 +1,7 @@
-import { app, Menu, shell, BrowserWindow } from 'electron';
-import pkg from '../../package.json';
-export default class MenuBuilder {
+const { app, Menu, shell, BrowserWindow } = require('electron');
+const pkg = require('../../package.json');
+
+class MenuBuilder {
   constructor(mainWindow) {
     this.mainWindow = mainWindow;
   }
@@ -188,7 +189,8 @@ export default class MenuBuilder {
       ]
     };
 
-    const subMenuView = process.env.NODE_ENV === 'development' ? subMenuViewDev : subMenuViewProd;
+    // const subMenuView = process.env.NODE_ENV === 'development' ? subMenuViewDev : subMenuViewProd;
+    const subMenuView = subMenuViewDev;
 
     return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }
@@ -214,7 +216,7 @@ export default class MenuBuilder {
       {
         label: '&View',
         submenu:
-          process.env.NODE_ENV === 'development'
+          process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production'
             ? [
                 {
                   label: '&Reload',
@@ -249,3 +251,5 @@ export default class MenuBuilder {
     return templateDefault;
   }
 }
+
+module.exports = MenuBuilder;

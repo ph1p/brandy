@@ -8,14 +8,14 @@
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="arePresetsOpen">
 					<ul class="preset-list">
-						<li :key="preset.title" v-for="(preset, index) in presets" :class="{active: activePreset === index}" @click="activePreset = index">
-							<div class="preset-list__icon" :class="[preset.icon]">
-								<img v-if="preset.icon === 'twitter'" src="~renderer/assets/img/icons/ic_twitter.svg">
-								<img v-if="preset.icon === 'facebook'" src="~renderer/assets/img/icons/ic_facebook.svg">
-								<img v-if="preset.icon === 'instagram'" src="~renderer/assets/img/icons/ic_instagram.svg">
+						<li :key="presetItem.info.title" v-for="presetItem in presets" :class="{active: presetItem.info.title === preset.info.title}" @click="setCurrentPreset(presetItem)">
+							<div class="preset-list__icon" :class="[presetItem.info.icon]">
+								<img v-if="presetItem.info.icon === 'twitter'" src="~renderer/assets/img/icons/ic_twitter.svg">
+								<img v-if="presetItem.info.icon === 'facebook'" src="~renderer/assets/img/icons/ic_facebook.svg">
+								<img v-if="presetItem.info.icon === 'instagram'" src="~renderer/assets/img/icons/ic_instagram.svg">
 							</div>
-							<div class="preset-list__title">{{preset.title}}</div>
-							<div class="preset-list__measurement">{{preset.width}}x{{preset.height}}</div>
+							<div class="preset-list__title">{{presetItem.info.title}}</div>
+							<div class="preset-list__measurement">{{presetItem.measurements.width}}x{{presetItem.measurements.height}}</div>
 						</li>
 					</ul>
 				</div>
@@ -26,40 +26,38 @@
 					Logo
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="areLogosOpen">
-					<div class="brand">
-
-						<div class="brand__section" :class="{active: brand === 'b1w'}" @click="brand = 'b1w'">
-							<img src="~renderer/assets/img/logo.svg" />
-						</div>
-						<div class="brand__section" :class="{active: brand === 'b2w'}" @click="brand = 'b2w'">
-							<img src="~renderer/assets/img/logo2.svg" />
-						</div>
-						<div class="brand__section" :class="{active: brand === 'b1b'}" @click="brand = 'b1b'">
-							<img src="~renderer/assets/img/logo_black.svg" />
-						</div>
-						<div class="brand__section" :class="{active: brand === 'b2b'}" @click="brand = 'b2b'">
-							<img src="~renderer/assets/img/logo2_black.svg" />
+					<div class="logo">
+						<div v-for="logo in logos" class="logo__section"
+							:class="{active: selectedLogo === logo.name}"
+							@click="selectedLogo = selectedLogo === logo.name ? '' : logo.name"
+							:key="logo.name">
+							<div class="logo__sectionImage" v-html="logo.data"></div>
 						</div>
 
-						<ul class="brand__directionHorizontal">
-							<li @click="brandDirectionHorizontal = 'left'" :class="{active: brandDirectionHorizontal === 'left'}">
+						<div class="logo__color" v-if="selectedLogo">
+							<label for="logoColor">Color</label>
+							<input type="color" name="logoColor" v-model="logoColor" />
+						</div>
+
+						<ul class="logo__directionHorizontal" v-if="selectedLogo">
+							<li @click="logoDirectionH = 'left'" :class="{active: logoDirectionH === 'left'}">
 								<img src="~renderer/assets/img/icons/align_left.svg" />
 							</li>
-							<li @click="brandDirectionHorizontal = 'center'" :class="{active: brandDirectionHorizontal === 'center'}">
+							<li @click="logoDirectionH = 'center'" :class="{active: logoDirectionH === 'center'}">
 								<img src="~renderer/assets/img/icons/align_mid.svg" />
 							</li>
-							<li @click="brandDirectionHorizontal = 'right'" :class="{active: brandDirectionHorizontal === 'right'}">
+							<li @click="logoDirectionH = 'right'" :class="{active: logoDirectionH === 'right'}">
 								<img src="~renderer/assets/img/icons/align_right.svg" />
 							</li>
 						</ul>
-						<ul class="brand__directionVertical">
-							<li @click="brandDirectionVertical = 'top'" :class="{active: brandDirectionVertical === 'top'}">
+						<ul class="logo__directionVertical" v-if="selectedLogo">
+							<li @click="logoDirectionV = 'top'" :class="{active: logoDirectionV === 'top'}">
 								<img src="~renderer/assets/img/icons/top_align.svg" />
 							</li>
-							<li @click="brandDirectionVertical = 'center'" :class="{active: brandDirectionVertical === 'center'}">
+							<li @click="logoDirectionV = 'center'" :class="{active: logoDirectionV === 'center'}">
 								<img src="~renderer/assets/img/icons/center_align.svg" />
 							</li>
-							<li @click="brandDirectionVertical = 'bottom'" :class="{active: brandDirectionVertical === 'bottom'}">
+							<li @click="logoDirectionV = 'bottom'" :class="{active: logoDirectionV === 'bottom'}">
 								<img src="~renderer/assets/img/icons/bottom_align.svg" />
 							</li>
 						</ul>
@@ -73,23 +71,26 @@
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="areFiltersOpen">
 
-					<Filters :filter="filter" :filterPresets="filterPresets" />
+					<Filters />
 
 				</div>
 			</div>
 
-			<div class="sidebar__sectionsItem">
+			<div class="sidebar__sectionsItem stroke">
 				<div class="sidebar__sectionsItem-title" @click="areStrokeOptionsOpen = !areStrokeOptionsOpen" :class="{active: areStrokeOptionsOpen}">
 					Stroke
 				</div>
 				<div class="sidebar__sectionsItem-content" v-if="areStrokeOptionsOpen">
 
-					<label for="strokeWidth">Width</label>
-					<input type="range" v-model="stroke.width" name="strokeWidth" min="0" max="20" step="1">
+					<div class="stroke__width">
+						<label for="strokeWidth">Width</label>
+						<input type="range" v-model="strokeWidth" name="strokeWidth" min="0" max="20" step="1">
+					</div>
 
-					<label for="strokeColor">Color</label>
-					<input type="color" name="strokeColor" v-model="stroke.color" />
-
+					<div class="stroke__color">
+						<label for="strokeColor">Color</label>
+						<input type="color" name="strokeColor" v-model="strokeColor" />
+					</div>
 				</div>
 			</div>
 
@@ -107,10 +108,10 @@
 								<li @click="textAlign = 'center';" :class="{active: textAlign === 'center'}"><img src="~renderer/assets/img/icons/text_mid.svg"></li>
 								<li @click="textAlign = 'right';" :class="{active: textAlign === 'right'}"><img src="~renderer/assets/img/icons/text.svg"></li>
 							</ul>
-							<input type="text" v-model="title" placeholder="Titel">
+							<input type="text" v-model="textTitle" placeholder="Titel">
 						</div>
 						<div class="texts__subtitle">
-							<input type="text" v-model="subtitle" placeholder="Subtitel">
+							<input type="text" v-model="textSubTitle" placeholder="Subtitel">
 						</div>
 					</div>
 				</div>
@@ -129,8 +130,14 @@
 	</div>
 </template>
 <script>
+import { mapGetters, mapActions } from 'vuex';
 import { remote, ipcRenderer } from 'electron';
 import Filters from '../../components/Filters';
+
+import logo from '../../assets/img/logo.svg';
+import logo2 from '../../assets/img/logo2.svg';
+
+import { presets } from '../../presets';
 
 export default {
   name: 'sidebar',
@@ -139,215 +146,141 @@ export default {
   },
   data() {
     return {
-      backgroundImage: '',
-      settings: {},
       arePresetsOpen: true,
       areLogosOpen: false,
       areFiltersOpen: false,
       areFontsOpen: false,
       areStrokeOptionsOpen: false,
-      brand: 'b1w',
-      brandDirectionHorizontal: 'center',
-      brandDirectionVertical: 'bottom',
-      title: '',
-      subtitle: '',
-      textAlign: 'center',
       activePreset: 0,
       selectedFilterPreset: null,
-      stroke: {
-        color: '#ffffff',
-        width: 0
-      },
-      filter: {
-        blur: 0,
-        filters: []
-      }
+      presets
     };
   },
   watch: {
     textProperties(value) {
       this.$parent.$emit('changeTexts', value);
-    },
-    logoProperties(value) {
-      this.$parent.$emit('changeLogo', value);
-    },
-    backgroundImage(path) {
-      this.$parent.$emit('changeBackground', path);
-    },
-    stroke: {
-      deep: true,
-      handler(value) {
-        this.$parent.$emit('changeStroke', {
-          width: parseInt(value.width, 0),
-          color: value.color
-        });
-      }
-    },
-    filter: {
-      deep: true,
-      handler(value) {
-        this.$parent.$emit('changeFilter', value);
-      }
-    },
-    activePreset(value) {
-      this.$parent.$emit('changeTexts', this.textProperties);
-      this.$parent.$emit('changePreset', this.activePresetObj);
-      this.$parent.$emit('changeMeasurements', {
-        width: this.activePresetObj.width,
-        height: this.activePresetObj.height
-      });
     }
   },
   computed: {
-    presets() {
-      return [
-        {
-          icon: 'instagram',
-          title: 'Instagram',
-          width: 1080,
-          height: 1080,
-          logo: 180,
-          logo2: 95,
-          fontSize: 120
-        },
-        {
-          icon: 'instagram',
-          title: 'Instagram big',
-          width: 1080,
-          height: 1350,
-          logo: 180,
-          logo2: 95,
-          fontSize: 120
-        },
-        {
-          icon: 'twitter',
-          title: 'Twitter header',
-          width: 1500,
-          height: 500,
-          logo: 220,
-          logo2: 95,
-          fontSize: 80
-        },
-        {
-          icon: 'twitter',
-          title: 'Twitter desktop grid',
-          width: 1200,
-          height: 1200,
-          logo: 160,
-          logo2: 95,
-          fontSize: 130
-        },
-        {
-          icon: 'twitter',
-          title: 'Twitter mobile grid',
-          width: 1200,
-          height: 675,
-          logo: 160,
-          logo2: 95,
-          fontSize: 110
-        },
-        {
-          icon: 'twitter',
-          title: 'Twitter appcard mit Bild',
-          width: 800,
-          height: 320,
-          logo: 120,
-          logo2: 95,
-          fontSize: 60
-        },
-        {
-          icon: 'facebook',
-          title: 'Facebook ad',
-          width: 1200,
-          height: 628,
-          logo: 160,
-          logo2: 95,
-          fontSize: 110
-        },
-        {
-          icon: 'facebook',
-          title: 'Facebook carousel',
-          width: 1080,
-          height: 1080,
-          logo: 180,
-          logo2: 95,
-          fontSize: 120
-        }
-      ];
+    ...mapGetters('canvas', ['isLoading', 'stroke', 'font', 'text', 'preset', 'logo', 'logos']),
+    strokeWidth: {
+      get() {
+        return this.stroke.width;
+      },
+      set(value) {
+        this.setStroke({
+          width: parseInt(value, 0)
+        });
+      }
     },
-    filterPresets() {
-      return [
-        {
-          name: 'spotify',
-          blur: 0,
-          filters: [
-            {
-              color: '#08b76c',
-              opacity: 1,
-              mode: 'multiply'
-            },
-            {
-              color: '#0a3463',
-              opacity: 1,
-              mode: 'lighten'
-            }
-          ]
-        },
-        {
-          name: 'law&order',
-          blur: 0,
-          filters: [
-            // {
-            //   opacity: 1,
-            //   mode: 'unset'
-            // },
-            {
-              color: '#c35655',
-              opacity: 1,
-              mode: 'screen'
-            }
-          ]
-        },
-        {
-          name: 'dark',
-          blur: 0.1,
-          filters: [
-            {
-              color: '#EF3340',
-              opacity: 1,
-              mode: 'darken'
-            }
-          ]
-        }
-      ];
+    strokeColor: {
+      get() {
+        return this.stroke.color;
+      },
+      set(value) {
+        this.setStroke({
+          color: value
+        });
+      }
     },
-    logoProperties() {
-      return {
-        brand: this.brand,
-        brandDirectionHorizontal: this.brandDirectionHorizontal,
-        brandDirectionVertical: this.brandDirectionVertical,
-        logoSize: this.activePresetObj.logo,
-        logo2Size: this.activePresetObj.logo2
-      };
+    logoColor: {
+      get() {
+        return this.logo.color;
+      },
+      set(value) {
+        this.setLogo({
+          color: value
+        });
+      }
     },
-    activePresetObj() {
-      return this.presets[this.activePreset];
+    logoDirectionH: {
+      get() {
+        return this.logo.directionH;
+      },
+      set(value) {
+        this.setLogo({
+          directionH: value
+        });
+      }
+    },
+    logoDirectionV: {
+      get() {
+        return this.logo.directionV;
+      },
+      set(value) {
+        this.setLogo({
+          directionV: value
+        });
+      }
+    },
+    textTitle: {
+      get() {
+        return this.text.title;
+      },
+      set(value) {
+        this.setText({
+          title: value
+        });
+      }
+    },
+    textSubTitle: {
+      get() {
+        return this.text.subtitle;
+      },
+      set(value) {
+        this.setText({
+          subtitle: value
+        });
+      }
+    },
+    textAlign: {
+      get() {
+        return this.text.align;
+      },
+      set(value) {
+        this.setText({
+          align: value
+        });
+      }
+    },
+    selectedLogo: {
+      get() {
+        return this.logo.current;
+      },
+      set(value) {
+        this.setLogo({
+          current: value
+        });
+      }
     },
     textProperties() {
       return {
-        textAlign: this.textAlign,
         title: this.title,
         subtitle: this.subtitle,
-        fontSize: this.activePresetObj.fontSize,
-        width: this.activePresetObj.width,
-        height: this.activePresetObj.height
+        width: this.preset.measurements.width,
+        height: this.preset.measurements.height
       };
     }
   },
   methods: {
+    ...mapActions('canvas', [
+      'stopLoading',
+      'startLoading',
+      'setStroke',
+      'setFont',
+      'setText',
+      'setPresetInfo',
+      'setMeasurements',
+      'setLogo',
+      'setBackgroundPath'
+    ]),
+    setCurrentPreset(preset) {
+      this.setPresetInfo(preset.info);
+      this.setFont(preset.font);
+      this.setMeasurements(preset.measurements);
+    },
     exportImage() {
       const canvas = document.getElementById('canvas');
-      const dataURL = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
 
       remote.dialog.showSaveDialog(
         {
@@ -365,12 +298,13 @@ export default {
           if (fileName === undefined) return;
 
           ipcRenderer.send('compress-image', {
-            image: dataURL,
-            isBase64: true,
+            name: 'export-image',
+            type: 'path',
+            data: canvas.toDataURL('image/png'),
             savePath: fileName
           });
 
-          ipcRenderer.on('compressed-image', (event, image) => {
+          ipcRenderer.on('compressed-image-export-image', (event, image) => {
             console.log(image);
           });
         }
@@ -391,34 +325,19 @@ export default {
 
           const fileName = fileNames[0];
 
-          this.backgroundImage = fileName;
+          this.setBackgroundPath(fileName);
         }
       );
     }
   },
+  created() {
+    if (!this.preset.info.title) {
+      this.setCurrentPreset(this.presets[0]);
+    }
+  },
   mounted() {
     this.$parent.$on('loaded', () => {
-      this.$parent.$emit('changeLogo', this.logoProperties);
-			this.$parent.$emit('changeTexts', this.textProperties);
-			console.log('changePreset');
-      this.$parent.$emit('changePreset', this.activePresetObj);
-      this.$parent.$emit('changeStroke', this.stroke);
-      this.$parent.$emit('changeMeasurements', {
-        width: this.activePresetObj.width,
-        height: this.activePresetObj.height
-      });
-    });
-
-    this.$on('change:filter', filter => {
-      this.filter = filter;
-    });
-
-    this.$on('remove:filter', index => {
-      this.filter.filters = this.filter.filters.filter((filter, i) => i !== index);
-    });
-
-    this.$on('add:filter', filter => {
-      this.filter.filters = this.filter.filters.concat(filter);
+      this.$parent.$emit('changeTexts', this.textProperties);
     });
 
     document.onkeydown = event => {
@@ -498,11 +417,18 @@ export default {
     }
 
     // LOGOS
-    .brand {
+    .logo {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       grid-gap: 10px;
       width: 100%;
+
+      &__color {
+        grid-column: span 2;
+        label {
+          font-weight: bold;
+        }
+      }
 
       &__section {
         border: 1px solid lighten($mainColor, 35%);
@@ -518,18 +444,20 @@ export default {
         &:hover {
           border-color: $blue;
         }
-        img {
+        &Image {
           cursor: pointer;
           display: inline-block;
           align-self: center;
           width: 50%;
+          svg {
+            path {
+              fill: #fff;
+            }
+          }
         }
       }
       &__directionHorizontal,
       &__directionVertical {
-        grid-row: 2;
-        grid-column: span 2;
-
         margin: 0;
         padding: 0;
         display: inline-block;
@@ -705,10 +633,6 @@ export default {
       &:hover {
         background-color: lighten($mainColor, 58%);
       }
-    }
-    .open-image {
-    }
-    .export-image {
     }
   }
 }
