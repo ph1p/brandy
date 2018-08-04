@@ -77,9 +77,9 @@ export const presets = [
   {
     info: {
       icon: 'twitter',
-      title: 'Twitter appcard mit Bild',
+      title: 'Twitter appcard',
       logo: 120,
-      logo2: 95,
+      logo2: 65,
     },
     measurements: {
       width: 800,

@@ -1,7 +1,9 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import fs from 'fs';
-import MenuBuilder from './menu';
-import Jimp from 'jimp';
+const { app, BrowserWindow, ipcMain } = require('electron');
+const fs = require('fs');
+const jimp = require('jimp');
+
+const MenuBuilder = require('./menu');
+
 const winURL =
   process.env.NODE_ENV === 'development' ? `http://localhost:${process.env.PORT}` : `file://${__dirname}/index.html`;
 
@@ -20,7 +22,7 @@ const createWindow = () => {
     backgroundColor: '#f0f1f4',
     frame: false,
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       preload: require.resolve('./preload')
     }
   });
@@ -28,6 +30,9 @@ const createWindow = () => {
   mainWindow.setContentProtection(true);
 
   mainWindow.loadURL(`${winURL}`);
+
+  const menu = new MenuBuilder(mainWindow);
+  menu.buildMenu();
 
   ipcMain.on('add-renderer-notification', (event, text, type = 'default') => {
     mainWindow.webContents.send('add-renderer-notification', text, type);
@@ -65,13 +70,13 @@ const createWindow = () => {
     }
 
     if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
-      Jimp.read(givenImage)
+      jimp.read(givenImage)
         .then(image => {
           if (type === 'buffer') {
             image
               .quality(95)
-              .resize(Jimp.AUTO, 1200)
-              .getBuffer(Jimp.MIME_JPEG, (err, img) => {
+              .resize(jimp.AUTO, 1200)
+              .getBuffer(jimp.MIME_JPEG, (err, img) => {
                 win.send(`compressed-image-${name}`, img);
               });
           } else if (type === 'path') {

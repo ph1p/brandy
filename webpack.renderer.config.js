@@ -75,7 +75,7 @@ let rendererConfig = {
       test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
       exclude: /node_modules/,
       loaders: [
-        'file-loader?context=src/renderer/img&name=/imgs/[name].[ext]', {
+        'file-loader?context=src/renderer/img&name=./imgs/[name].[ext]', {
           loader: 'image-webpack-loader',
           query: {
             mozjpeg: {

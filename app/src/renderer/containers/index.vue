@@ -21,6 +21,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import { ipcRenderer } from 'electron';
+import FontFaceObserver from 'fontfaceobserver';
 import { fabric } from 'fabric';
 import Sidebar from './Sidebar';
 import Loader from '../components/Loader';
@@ -28,6 +29,7 @@ import Loader from '../components/Loader';
 let canvas = null;
 
 fabric.isWebglSupported(fabric.textureSize);
+fabric.filterBackend = new fabric.WebglFilterBackend();
 
 // https://github.com/fabricjs/fabric.js/issues/4347
 fabric.IText.prototype.set({
@@ -175,7 +177,7 @@ export default {
         canvas.setHeight(height);
 
         if ((img.width > img.height && height >= width) || height >= width) {
-					scaleFactor = height / img.height;
+          scaleFactor = height / img.height;
         }
 
         img.set({
@@ -302,51 +304,41 @@ export default {
       if (!textObject) {
         const textObj = new fabric.IText(`${title}\n${subTitle}`, {
           name: 'text',
-          fontFamily: 'Varela Round',
-          targetFindTolerance: 0,
           left: 0,
           top: 0,
-          fontSize: this.font.size,
-          padding: 50,
-          lineHeight: 1,
-          fill: this.font.color,
-          textAlign: 'center',
           hasControls: false,
           selectable: false,
           hoverCursor: 'normal',
-          editable: false,
-          styles: {
-            1: Array.from(subTitle).reduce((before, current, index) => {
-              return {
-                ...before,
-                [index]: {
-                  fontSize: this.font.size / 2
-                }
-              };
-            }, {})
-          }
+          editable: false
         });
 
         textObject = textObj;
         canvas.add(textObj);
-
-        textObj.setCoords();
-      } else {
-        textObject.set({
-					fontSize: this.font.size,
-          text: `${title}\n${subTitle}`,
-          styles: {
-            1: Array.from(subTitle).reduce((before, current, index) => {
-              return {
-                ...before,
-                [index]: {
-                  fontSize: this.font.size / 2
-                }
-              };
-            }, {})
-          }
-        });
       }
+
+      textObject.set('fontFamily', 'Varela Round');
+
+      textObject.setCoords();
+
+      textObject.set({
+        targetFindTolerance: 0,
+        lineHeight: 1,
+        fontSize: this.font.size,
+        fill: this.font.color,
+        text: `${title}\n${subTitle}`,
+        padding: 50,
+        textAlign: this.text.align,
+        styles: {
+          1: Array.from(subTitle).reduce((before, current, index) => {
+            return {
+              ...before,
+              [index]: {
+                fontSize: this.font.size / 2
+              }
+            };
+          }, {})
+        }
+      });
 
       switch (this.text.align) {
         case 'right':
@@ -359,11 +351,10 @@ export default {
           textObject.center();
           break;
       }
+
       textObject.centerV();
-
-      textObject.textAlign = this.text.align;
-
-      canvas.renderAll();
+      console.log('setFont');
+      canvas.requestRenderAll();
     },
     scaleStage() {
       const contentElement = this.$refs.contentElement;
@@ -481,12 +472,12 @@ export default {
         canvas.sendToBack(newImage);
 
         this.setMeasurements();
-        this.setTexts();
         this.setFilters();
         this.setLogoImage();
         this.setLogoSettings();
-				this.setImageStroke();
-				this.scaleStage();
+        this.setImageStroke();
+        this.scaleStage();
+        this.setTexts();
 
         canvas.renderAll();
 
@@ -495,48 +486,45 @@ export default {
     });
   },
   mounted() {
-    fabric.filterBackend = new fabric.WebglFilterBackend();
+    const font = new FontFaceObserver('Varela Round');
+    font.load().then(() => {
+      if (!canvas) {
+        canvas = new fabric.Canvas(this.$refs.canvasElement, {
+          controlsAboveOverlay: true,
+          preserveObjectStacking: true,
+          enableRetinaScaling: true,
+          renderOnAddRemove: true
+        });
+        window.can = canvas;
 
-    if (!canvas) {
-      canvas = new fabric.Canvas(this.$refs.canvasElement, {
-        controlsAboveOverlay: true,
-        preserveObjectStacking: true,
-        enableRetinaScaling: true,
-        renderOnAddRemove: true
-      });
-      window.can = canvas;
+        canvas.selection = false;
+        canvas.setHeight(canvas.width);
+        canvas.setWidth(canvas.height);
+        canvas.hasBorders = false;
 
-      canvas.selection = false;
-      canvas.setHeight(canvas.width);
-      canvas.setWidth(canvas.height);
-      canvas.hasBorders = false;
+        canvas.on('object:moving', e => {
+          var obj = e.target;
 
-      canvas.on('object:moving', e => {
-        var obj = e.target;
+          let { height: objectHeight, width: objectWidth } = obj;
+          let { width: canvasWidth, height: canvasHeight } = obj.canvas;
 
-        let { height: objectHeight, width: objectWidth } = obj;
-        let { width: canvasWidth, height: canvasHeight } = obj.canvas;
+          if (obj.top > 0) {
+            obj.top = 0;
+          }
 
-        if (obj.top > 0) {
-          obj.top = 0;
-        }
+          if (Math.abs(obj.top) > Math.abs(canvasHeight - objectHeight * obj.scaleY)) {
+            obj.top = canvasHeight - objectHeight * obj.scaleY;
+          }
 
-        if (Math.abs(obj.top) > Math.abs(canvasHeight - objectHeight * obj.scaleY)) {
-          obj.top = canvasHeight - objectHeight * obj.scaleY;
-        }
+          if (obj.left > 0 || objectWidth * obj.scaleX === canvasWidth) {
+            obj.left = 0;
+          }
 
-        if (obj.left > 0 || objectWidth * obj.scaleX === canvasWidth) {
-          obj.left = 0;
-        }
-
-        if (Math.abs(obj.left) > Math.abs(canvasWidth - objectWidth * obj.scaleX)) {
-          obj.left = canvasWidth - objectWidth * obj.scaleX;
-        }
-      });
-    }
-
-    this.$on('changeTexts', opt => {
-      this.texts = opt;
+          if (Math.abs(obj.left) > Math.abs(canvasWidth - objectWidth * obj.scaleX)) {
+            obj.left = canvasWidth - objectWidth * obj.scaleX;
+          }
+        });
+      }
     });
 
     // SCALE
@@ -561,15 +549,6 @@ export default {
       e.stopPropagation();
 
       this.setBackgroundPath(e.dataTransfer.files[0].path);
-
-      WebFont.load({
-        google: {
-          families: ['Varela Round']
-        },
-        active: () => {
-          this.$emit('loaded');
-        }
-      });
     };
   }
 };

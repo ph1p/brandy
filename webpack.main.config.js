@@ -4,40 +4,74 @@ process.env.BABEL_ENV = 'main';
 
 const path = require('path');
 const webpack = require('webpack');
-const BabiliPlugin = require("babili-webpack-plugin");
-
-const pkg = require('./app/package.json');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const externals = require('./app/package.json').dependencies;
+const possibleExternals  = require('./package.json').dependencies;
+
+// Find all the dependencies without a `main` property and add them as webpack externals
+function filterDepWithoutEntryPoints(dep) {
+  // Return true if we want to add a dependency to externals
+  try {
+    // If the root of the dependency has an index.js, return true
+    if (fs.existsSync(path.join(__dirname, `node_modules/${dep}/index.js`))) {
+      return false;
+    }
+    const pgkString = fs
+      .readFileSync(path.join(__dirname, `node_modules/${dep}/package.json`))
+      .toString();
+    const pkg = JSON.parse(pgkString);
+    const fields = ['main', 'module', 'jsnext:main', 'browser'];
+    return !fields.some(field => field in pkg);
+  } catch (e) {
+    console.log(e);
+    return true;
+  }
+}
+
 let mainConfig = {
+  optimization: {
+    minimizer: [
+      // we specify a custom UglifyJsPlugin here to get source maps in production
+      new UglifyJsPlugin({
+        cache: true,
+        parallel: true,
+        uglifyOptions: {
+          compress: false,
+          ecma: 6,
+          mangle: true
+        },
+        sourceMap: true
+      })
+    ]
+  },
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ?
     '' : 'source-map',
   entry: {
-    main: ['babel-polyfill', path.join(__dirname, 'app/src/main/index.js')]
+    main: path.join(__dirname, 'app/src/main/index.js')
   },
-  externals: Object.keys(pkg.dependencies || {}),
+  externals: [
+    ...Object.keys(externals || {})
+    // ...Object.keys(possibleExternals || {}).filter(filterDepWithoutEntryPoints)
+  ],
   module: {
     rules: [{
       test: /\.js$/,
       loader: 'babel-loader',
       exclude: /node_modules/
-    },
-      // {
-      //   test: /\.json$/,
-      //   loader: 'json-loader'
-      // }
-    ]
+    }]
   },
   node: {
     __dirname: false,
     __filename: false
   },
   output: {
-    filename: '[name].js',
     libraryTarget: 'commonjs2',
-    path: path.join(__dirname, 'app/dist')
+    filename: './app/dist/main.js',
+    path: __dirname
   },
   plugins: [
     new webpack.optimize.OccurrenceOrderPlugin(),
@@ -45,26 +79,12 @@ let mainConfig = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': '"production"'
     }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        screw_ie8: true,
-        warnings: false
-      }
-    })
   ],
   resolve: {
-    extensions: [
-      '.js', '.json', '.node'
-    ]
-    //modules: [path.join(__dirname, 'app/node_modules')]
+    extensions: ['.js', '.jsx', '.json'],
+    modules: [path.join(__dirname, 'app'), 'node_modules']
   },
   target: 'electron-main'
 };
-
-if (isProduction) {
-  mainConfig.plugins.push(new BabiliPlugin({}, {
-    comments: false
-  }))
-}
 
 module.exports = mainConfig;
