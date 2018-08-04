@@ -353,7 +353,6 @@ export default {
       }
 
       textObject.centerV();
-      console.log('setFont');
       canvas.requestRenderAll();
     },
     scaleStage() {
@@ -361,7 +360,7 @@ export default {
 
       if (typeof contentElement !== 'undefined') {
         const scale = Math.min(
-          (contentElement.offsetWidth - 100) / canvas.getWidth(),
+          (contentElement.offsetWidth - 50) / canvas.getWidth(),
           (contentElement.offsetHeight - 180) / canvas.getHeight()
         );
 

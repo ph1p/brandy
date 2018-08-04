@@ -102,7 +102,7 @@ let rendererConfig = {
         loader: 'url-loader',
         query: {
           limit: 10000,
-          name: '/fonts/[name].[ext]'
+          name: './fonts/[name].[ext]'
         }
       }
     }
