@@ -1,6 +1,6 @@
 {
   "name": "brandy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "build:signed": "npm run pack && cross-env CSC_LINK=file://./cert.p12 CSC_KEY_PASSWORD=123456 build",
     "build": "npm run pack && build",
