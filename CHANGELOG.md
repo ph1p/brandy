@@ -1,7 +1,6 @@
 <a name="0.2.0"></a>
 # [0.2.0](/compare/c39a470...v0.2.0) (2018-08-04)
 
-
 ### Bug Fixes
 
 * **build:** fix build process 28b582a
@@ -17,6 +16,3 @@
 * **store/stroke:** connect stroke object with store fe48eac
 * **store/text:** connect text with store c950c44
 * **text/align:** connect text align with store 1d7c53b
-
-
-
