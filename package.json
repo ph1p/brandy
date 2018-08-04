@@ -1,4 +1,6 @@
 {
+  "name": "brandy",
+  "version": "0.1.0",
   "scripts": {
     "build:signed": "npm run pack && cross-env CSC_LINK=file://./cert.p12 CSC_KEY_PASSWORD=123456 build",
     "build": "npm run pack && build",
@@ -10,7 +12,7 @@
     "test": "npm run unit",
     "unit": "cross-env BABEL_ENV=testing-unit karma start test/unit/karma.conf.js",
     "postinstall": "cd app && npm install",
-    "preversion": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md"
+    "preversion": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md"
   },
   "husky": {
     "hooks": {
@@ -24,7 +26,7 @@
     ]
   },
   "build": {
-    "asar": false,
+    "asar": true,
     "extraMetadata": {
       "main": "./dist/main.js"
     },
@@ -122,6 +124,7 @@
     "babel-runtime": "^6.23.0",
     "babili-webpack-plugin": "^0.1.2",
     "chai": "^3.5.0",
+    "conventional-changelog-cli": "^2.0.1",
     "cross-env": "^3.1.4",
     "css-loader": "^1.0.0",
     "devtron": "^1.1.0",
