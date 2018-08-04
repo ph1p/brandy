@@ -12,6 +12,17 @@
     "postinstall": "cd app && npm install",
     "preversion": "./node_modules/.bin/conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "app/src/**/*.{js,scss}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
   "build": {
     "asar": false,
     "extraMetadata": {
@@ -57,17 +68,6 @@
     "tabWidth": 2,
     "printWidth": 120,
     "trailingComma": "none"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "src/**/*.{js,ts,json,css}": [
-      "prettier --write",
-      "git add"
-    ]
   },
   "babel": {
     "comments": false,
@@ -147,6 +147,7 @@
     "karma-sourcemap-loader": "^0.3.7",
     "karma-spec-reporter": "0.0.26",
     "karma-webpack": "^2.0.1",
+    "lint-staged": "^7.2.0",
     "mini-css-extract-plugin": "^0.4.1",
     "mocha": "^3.4.2",
     "node-sass": "^4.5.3",

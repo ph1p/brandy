@@ -7,17 +7,16 @@ $font-size: 1.3rem;
 $font-size-sm: 1.2rem;
 $font-size-lg: 1.6rem;
 
-
 // Sizes
 $layout-padding: 1rem;
 $layout-padding-lg: 1.5rem;
 $control-min-width: 18rem;
-$border-radius: .2rem;
-$border-width: .1rem;
+$border-radius: 0.2rem;
+$border-width: 0.1rem;
 
 // Colors
 // Core colors
-$primary-color: #0055FF;
+$primary-color: #0055ff;
 $primary-color-dark: darken($primary-color, 20%);
 $primary-color-light: lighten($primary-color, 3%);
 $secondary-color: lighten($primary-color, 40%);
@@ -56,8 +55,6 @@ $zindex-1: 100;
 $zindex-2: 200;
 $zindex-3: 300;
 $zindex-4: 400;
-
-
 
 $body-bg: $bg-color-light;
 $body-font-color: lighten($dark-color, 5%);

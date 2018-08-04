@@ -8,7 +8,7 @@ export const presets = [
     },
     measurements: {
       width: 1080,
-      height: 1080,
+      height: 1080
     },
     font: {
       size: 120
@@ -19,7 +19,7 @@ export const presets = [
       icon: 'instagram',
       title: 'Instagram big',
       logo: 180,
-      logo2: 95,
+      logo2: 95
     },
     measurements: {
       width: 1080,
@@ -34,7 +34,7 @@ export const presets = [
       icon: 'twitter',
       title: 'Twitter header',
       logo: 220,
-      logo2: 95,
+      logo2: 95
     },
     measurements: {
       width: 1500,
@@ -49,7 +49,7 @@ export const presets = [
       icon: 'twitter',
       title: 'Twitter desktop grid',
       logo: 160,
-      logo2: 95,
+      logo2: 95
     },
     measurements: {
       width: 1200,
@@ -64,7 +64,7 @@ export const presets = [
       icon: 'twitter',
       title: 'Twitter mobile grid',
       logo: 160,
-      logo2: 95,
+      logo2: 95
     },
     measurements: {
       width: 1200,
@@ -79,7 +79,7 @@ export const presets = [
       icon: 'twitter',
       title: 'Twitter appcard',
       logo: 120,
-      logo2: 65,
+      logo2: 65
     },
     measurements: {
       width: 800,
@@ -94,7 +94,7 @@ export const presets = [
       icon: 'facebook',
       title: 'Facebook ad',
       logo: 160,
-      logo2: 95,
+      logo2: 95
     },
     measurements: {
       width: 1200,
@@ -109,7 +109,7 @@ export const presets = [
       icon: 'facebook',
       title: 'Facebook carousel',
       logo: 180,
-      logo2: 95,
+      logo2: 95
     },
     measurements: {
       width: 1080,

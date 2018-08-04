@@ -41,18 +41,12 @@ const createWindow = () => {
   // compress image and send it the render process
   ipcMain.on('compress-image', (event, data) => {
     const win = event.sender.getOwnerBrowserWindow().webContents;
-    let ext = 'jpg'
-    let {
-      type,
-      data: givenImage,
-      name,
-      savePath
-    } = data;
+    let ext = 'jpg';
+    let { type, data: givenImage, name, savePath } = data;
 
     if (givenImage.indexOf(';base64,') >= 0) {
       givenImage = Buffer.from(givenImage.replace(/^data:image\/png;base64,/, ''), 'base64');
     } else {
-
       if (typeof type === 'undefined') {
         ext = /^.+\.([^.]+)$/.exec(givenImage)[1];
 
@@ -70,7 +64,8 @@ const createWindow = () => {
     }
 
     if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
-      jimp.read(givenImage)
+      jimp
+        .read(givenImage)
         .then(image => {
           if (type === 'buffer') {
             image
