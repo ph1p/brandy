@@ -334,11 +334,6 @@ export default {
     if (!this.preset.info.title) {
       this.setCurrentPreset(this.presets[0]);
     }
-  },
-  mounted() {
-    this.$parent.$on('loaded', () => {
-      this.$parent.$emit('changeTexts', this.textProperties);
-    });
 
     document.onkeydown = event => {
       if ((event.ctrlKey || event.metaKey) && event.which == 83) {
