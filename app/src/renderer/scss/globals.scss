@@ -36,14 +36,12 @@ textarea {
 
 a:not([draggable='true']),
 img:not([draggable='true']) {
-  -webkit-user-drag: none;
   user-drag: none;
 }
 
 a[href^="ftp://"],
 a[href^="http://"],
 a[href^="https://"] {
-  -webkit-user-drag: auto;
   user-drag: auto;
 }
 

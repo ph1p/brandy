@@ -1,6 +1,6 @@
 <template>
 	<transition name="fade">
-		<div v-if="isLoading" class="loader">
+		<div v-show="isLoading" class="loader">
 			<div class="text">
 				{{text}}
 			</div>
@@ -35,12 +35,9 @@ export default {
   font-size: 1.4rem;
   top: 0;
   left: 0;
-  z-index: 999;
+  z-index: 9999;
   display: flex;
-  flex-direction: row-reverse;
-  flex-wrap: nowrap;
   justify-content: center;
-  align-content: center;
   align-items: center;
 }
 .fade-enter-active,

@@ -1,5 +1,6 @@
 <template>
-	<div class="main-container">
+	<div :class="['main-container', isDraggingFile ? 'dragging' : '']" ref="mainContainer">
+
 		<Loader :isLoading="isLoading" :text="'Load Image...'" />
 
 		<Sidebar v-if="backgroundPath"></Sidebar>
@@ -9,7 +10,7 @@
 
 				<div class="empty-stage__inner">
 					<p>
-						drag image
+						Drag image here or click the button
 					</p>
 
 					<button @click="openFile">Choose an image</button>
@@ -75,6 +76,11 @@ export default {
   components: {
     Sidebar,
     Loader
+  },
+  data() {
+    return {
+      isDraggingFile: false
+    };
   },
   computed: {
     ...mapGetters('canvas', [
@@ -205,7 +211,10 @@ export default {
         canvas.setWidth(width);
         canvas.setHeight(height);
 
-        if ((img.width > img.height && height >= width) || height >= width) {
+        if (
+          ((img.width > img.height && height >= width) || height >= width) &&
+          height / img.height * img.width >= width
+        ) {
           scaleFactor = height / img.height;
         }
 
@@ -387,7 +396,7 @@ export default {
     scaleStage() {
       const contentElement = this.$refs.contentElement;
 
-      if (typeof contentElement !== 'undefined') {
+      if (contentElement && contentElement.offsetWidth) {
         const scale = Math.min(
           (contentElement.offsetWidth - 50) / canvas.getWidth(),
           (contentElement.offsetHeight - 180) / canvas.getHeight()
@@ -420,11 +429,16 @@ export default {
       if (path !== '') {
         canvas.clear();
         this.startLoading();
-        ipcRenderer.send('compress-image', {
-          data: path,
-          name: 'background',
-          type: 'buffer'
-        });
+
+        if (this.isLoading) {
+          this.$nextTick(() => {
+            ipcRenderer.send('compress-image', {
+              data: path,
+              name: 'background',
+              type: 'buffer'
+            });
+          });
+        }
       }
     },
     stroke: {
@@ -555,20 +569,31 @@ export default {
       }
     });
 
-    // SCALE
-    window.addEventListener('resize', this.scaleStage);
-
     // DRAG & DROP
-    document.ondragover = () => {
+    document.ondragover = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isDraggingFile = true;
       return false;
     };
 
-    document.ondragleave = () => {
+    document.ondragleave = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Get the location on screen of the element.
+      var rect = this.$refs.mainContainer.getBoundingClientRect();
+
+      // Check the mouseEvent coordinates are outside of the rectangle
+      if (e.x > rect.left + rect.width || e.x < rect.left || e.y > rect.top + rect.height || e.y < rect.top) {
+        this.isDraggingFile = false;
+      }
       return false;
     };
 
-    document.ondragend = () => {
-      this.startLoading();
+    document.ondragend = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isDraggingFile = false;
       return false;
     };
 
@@ -576,8 +601,20 @@ export default {
       e.preventDefault();
       e.stopPropagation();
 
-      this.setBackgroundPath(e.dataTransfer.files[0].path);
+      const filePath = e.dataTransfer.files[0].path;
+      const ext = /^.+\.([^.]+)$/.exec(filePath)[1];
+
+      this.isDraggingFile = false;
+
+      if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+        this.setBackgroundPath(filePath);
+      } else {
+        this.stopLoading();
+      }
     };
+
+    // SCALE
+    window.addEventListener('resize', this.scaleStage);
   }
 };
 </script>
@@ -605,15 +642,32 @@ export default {
       font-size: 14px;
       border-radius: 8px;
       background-color: rgb(56, 143, 63);
+      cursor: pointer;
     }
   }
 }
 .main-container {
   height: 100%;
-  height: 100%;
-  flex-direction: row;
   display: grid;
   grid-template-columns: 300px 1fr;
+  &.dragging {
+    &:before {
+      content: 'Yeah drop it!';
+      position: absolute;
+      top: 26px;
+      left: 0;
+      height: calc(100% - 26px);
+      width: 100%;
+      border: 3px dashed #9e9e9e;
+      padding: 15px;
+      margin: 0;
+      text-align: center;
+      color: #fff;
+      background-color: rgba(0, 0, 0, 0.66);
+      z-index: 99;
+      box-sizing: border-box;
+    }
+  }
   .content {
     background-color: $bgColor;
     position: relative;
