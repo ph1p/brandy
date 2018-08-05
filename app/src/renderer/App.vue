@@ -36,7 +36,7 @@ ipcRenderer.on('is-window-blurred', () => {
 export default {
   methods: {
     closeApp() {
-      win.close();
+      remote.app.quit();
     },
     maxApp() {},
     minApp() {
