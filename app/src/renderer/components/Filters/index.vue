@@ -37,7 +37,7 @@
 			</div>
 
 			<div class="filter__remove">
-				<span @click="removeFilter(index)" v-html="feather.toSvg('x', {color: '#000', width: 22, height:22})">löschen</span>
+				<span @click="removeFilter(index)" v-html="feather.toSvg('x', {color: '#000', width: 22, height:22})"></span>
 			</div>
 		</div>
 	</div>
@@ -134,6 +134,9 @@ export default {
   }
   &__add {
     margin: 20px 0;
+    svg, span {
+      cursor: pointer;
+    }
     span {
       cursor: pointer;
       background-color: #62a968;
@@ -151,8 +154,12 @@ export default {
     text-align: right;
     overflow: hidden;
     height: 18px;
+    cursor: pointer;
     span {
       display: inline-block;
+    }
+    svg, span {
+      cursor: pointer;
     }
   }
   &__blur {

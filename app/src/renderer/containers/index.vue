@@ -5,7 +5,17 @@
 		<Sidebar v-if="backgroundPath"></Sidebar>
 
 		<div class="content" ref="contentElement" :style="{gridColumn: backgroundPath ? '' : '1/-1'}">
-			<div class="" v-if="!backgroundPath">drag image</div>
+			<div class="empty-stage" v-if="!backgroundPath">
+
+				<div class="empty-stage__inner">
+					<p>
+						drag image
+					</p>
+
+					<button @click="openFile">Choose an image</button>
+				</div>
+
+			</div>
 
 			<div class="stage" ref="stageElement" v-show="backgroundPath">
 				<div class="stage-info" v-if="preset !== null && !isLoading">
@@ -20,7 +30,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, remote } from 'electron';
 import FontFaceObserver from 'fontfaceobserver';
 import { fabric } from 'fabric';
 import Sidebar from './Sidebar';
@@ -83,6 +93,25 @@ export default {
   },
   methods: {
     ...mapActions('canvas', ['stopLoading', 'startLoading', 'setBackgroundPath']),
+    openFile() {
+      remote.dialog.showOpenDialog(
+        {
+          filters: [
+            {
+              name: 'image',
+              extensions: ['jpg', 'jpeg', 'png']
+            }
+          ]
+        },
+        fileNames => {
+          if (fileNames === undefined) return;
+
+          const fileName = fileNames[0];
+
+          this.setBackgroundPath(fileName);
+        }
+      );
+    },
     setImageStroke() {
       const leftStrokeCanvas = canvas.getItemByName('leftStroke');
       const topStrokeCanvas = canvas.getItemByName('topStroke');
@@ -554,6 +583,31 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.empty-stage {
+  &__inner {
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    width: 400px;
+    text-align: center;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 5px;
+    p {
+      margin: 0 0 30px 0;
+    }
+    button {
+      border: 0;
+      padding: 12px 15px;
+      display: inline-block;
+      color: #fff;
+      font-size: 14px;
+      border-radius: 8px;
+      background-color: rgb(56, 143, 63);
+    }
+  }
+}
 .main-container {
   height: 100%;
   height: 100%;
